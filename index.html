@@ -1215,6 +1215,8 @@ async function viewBoard(){
        +'<span class="rt"><span class="scorepill">'+x.max+'</span></span></button>';}).join("")+'</div>'
       :'<div class="empty">아직 4점 이상 기록이 없습니다.</div>')
     +'<button class="btn alt" onclick="exportCSV()">보고서용 CSV 내려받기</button>'
+    +'<button class="btn alt" id="phzip" onclick="exportPhotos()">사진 전체 내려받기 (ZIP)</button>'
+    +'<p class="note" style="margin:10px 2px 0">사진은 용량이 커서 <b>PC 브라우저</b>에서 받으시길 권합니다. 부스명으로 파일명이 붙고 목록.csv가 같이 들어갑니다.</p>'
     +'<p class="note" style="margin:10px 2px 0">현황판은 팀 전원의 기록을 합산합니다. 기록 수정은 각자 본인 것만 가능합니다.</p>';
   window.__board={people,all,nameOf};
   paintSync();
@@ -1234,6 +1236,68 @@ async function exportCSV(){
   if(S.dl){ try{ await S.dl.save({filename:fn,data:csv}); return; }catch(e){} }
   const a=document.createElement("a");
   a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"})); a.download=fn; a.click();
+}
+
+
+/* ============ 사진 일괄 내려받기 (ZIP) ============ */
+const _crcT=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;
+  for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0;}return t;})();
+function crc32(u8){let c=0xFFFFFFFF;for(let i=0;i<u8.length;i++)c=_crcT[(c^u8[i])&0xFF]^(c>>>8);return (c^0xFFFFFFFF)>>>0;}
+function zipBuild(files){                     /* [{name, data:Uint8Array}] — 무압축 저장 */
+  const enc=new TextEncoder(); const parts=[]; const dir=[]; let off=0;
+  const u16=v=>[v&255,(v>>8)&255], u32=v=>[v&255,(v>>8)&255,(v>>16)&255,(v>>24)&255];
+  for(const f of files){
+    const nm=enc.encode(f.name), crc=crc32(f.data), sz=f.data.length;
+    const lh=new Uint8Array([...u32(0x04034b50),...u16(20),...u16(0x0800),...u16(0),...u16(0),...u16(0),
+      ...u32(crc),...u32(sz),...u32(sz),...u16(nm.length),...u16(0)]);
+    parts.push(lh,nm,f.data);
+    dir.push({nm,crc,sz,off}); off+=lh.length+nm.length+sz;
+  }
+  const cd=[]; let cdLen=0;
+  for(const d of dir){
+    const ch=new Uint8Array([...u32(0x02014b50),...u16(20),...u16(20),...u16(0x0800),...u16(0),...u16(0),...u16(0),
+      ...u32(d.crc),...u32(d.sz),...u32(d.sz),...u16(d.nm.length),...u16(0),...u16(0),...u16(0),...u16(0),
+      ...u32(0),...u32(d.off)]);
+    cd.push(ch,d.nm); cdLen+=ch.length+d.nm.length;
+  }
+  const end=new Uint8Array([...u32(0x06054b50),...u16(0),...u16(0),...u16(dir.length),...u16(dir.length),
+    ...u32(cdLen),...u32(off),...u16(0)]);
+  return new Blob([...parts,...cd,end],{type:"application/zip"});
+}
+function safeName(s){ return String(s||"").replace(/[\\/:*?"<>|]/g,"").replace(/\s+/g," ").trim().slice(0,40); }
+async function exportPhotos(){
+  const {all,nameOf}=window.__board||{}; if(!all) return;
+  const jobs=[];
+  for(const k in all){
+    const m=recMeta(k)||{};
+    all[k].forEach(x=>{ (x.e.p||[]).forEach((ph,i)=>{
+      if(!ph.id && !ph.k) return;
+      jobs.push({ph,base:[ (m.h?"홀"+m.h:"장소미정"), safeName(m.s||""), safeName(m.n||"") ]
+        .filter(Boolean).join("_")+"_"+(i+1), who:nameOf?nameOf(x.who):"", meta:m, e:x.e});
+    }); });
+  }
+  const btn=document.getElementById("phzip");
+  if(!jobs.length){ if(btn) btn.textContent="내려받을 사진이 없습니다"; return; }
+  const files=[]; const idx=[["파일명","구분","홀","부스","출품사","기록자","관심도","메모"]];
+  for(let n=0;n<jobs.length;n++){
+    const j=jobs[n];
+    if(btn) btn.textContent="사진 받는 중… "+(n+1)+" / "+jobs.length;
+    try{
+      const url=await photoURL(j.ph); if(!url) continue;
+      const buf=new Uint8Array(await (await fetch(url)).arrayBuffer());
+      const name=j.base+".jpg";
+      files.push({name,data:buf});
+      idx.push([name, j.meta.kind==="note"?"현장 메모":j.meta.kind==="x"?"조사 DB 밖":j.meta.kind==="talk"?"SIAL Talks":"조사 DB",
+        j.meta.h||"", j.meta.s||"", j.meta.n||"", j.who, j.e.s||"", (j.e.m||"").replace(/\r?\n/g," ")]);
+    }catch(e){}
+  }
+  if(!files.length){ if(btn) btn.textContent="사진을 받지 못했습니다"; return; }
+  const csv="﻿"+idx.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(",")).join("\r\n");
+  files.push({name:"목록.csv",data:new TextEncoder().encode(csv)});
+  const blob=zipBuild(files);
+  const fn="SIAL2026_현장사진_"+new Date().toISOString().slice(0,10)+".zip";
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=fn; a.click();
+  if(btn) btn.textContent="사진 "+(files.length-1)+"장 내려받기 완료";
 }
 
 /* ============ 뷰: 설정 ============ */
