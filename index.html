@@ -1,0 +1,1321 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#faf9f7"><meta name="apple-mobile-web-app-capable" content="yes"><title>SIAL 2026 부스 노트</title><link rel="apple-touch-icon" href="sempio.png"><style>body{margin:0}</style></head><body><script src="config.js"></script><script src="supabase-shim.js"></script><title>SIAL 2026 부스 노트</title>
+<style>
+:root{
+  --bg:#f6f5f2; --card:#fff; --ink:#191714; --ink2:#5d574e; --ink3:#8d8577;
+  --line:#e4e0d8; --line2:#efece6;
+  --accent:#b8322c; --accent2:#e07b1a; --ok:#2f7d4f; --blue:#2a5d9f;
+  --chip:#f0ede7; --sh:0 1px 2px rgba(0,0,0,.05),0 4px 14px rgba(0,0,0,.05);
+  --r:14px; --safe:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#141312; --card:#1e1c1a; --ink:#f0ece5; --ink2:#a9a196; --ink3:#7d766c;
+  --line:#312e2a; --line2:#272522; --chip:#2a2724;
+  --accent:#e0554e; --accent2:#f0952f; --ok:#4fa876; --blue:#6f9fd8;
+  --sh:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.25);
+}}
+:root[data-theme="dark"]{
+  --bg:#141312; --card:#1e1c1a; --ink:#f0ece5; --ink2:#a9a196; --ink3:#7d766c;
+  --line:#312e2a; --line2:#272522; --chip:#2a2724;
+  --accent:#e0554e; --accent2:#f0952f; --ok:#4fa876; --blue:#6f9fd8;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{overscroll-behavior-y:none}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Pretendard","Apple SD Gothic Neo","Noto Sans KR",Roboto,"Noto Sans CJK KR","Malgun Gothic",sans-serif;
+  font-size:15px;line-height:1.55;overflow-x:hidden;-webkit-text-size-adjust:100%}
+button,input,textarea,select{font:inherit;color:inherit}
+button{background:none;border:0;padding:0;cursor:pointer}
+a{color:var(--blue)}
+.wrap{max-width:820px;margin:0 auto;padding:0 16px calc(84px + var(--safe))}
+
+/* ---- top bar ---- */
+.top{position:sticky;top:0;z-index:40;background:var(--bg);border-bottom:1px solid var(--line)}
+.top .in{max-width:820px;margin:0 auto;padding:10px 16px;display:flex;gap:10px;align-items:center;min-height:52px}
+.back{width:34px;height:34px;border-radius:10px;background:var(--chip);display:grid;place-items:center;flex:none;font-size:17px}
+.ttl{font-weight:700;font-size:16px;letter-spacing:-.02em;flex:1;min-width:0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sub{font-size:12px;color:var(--ink3);font-weight:500}
+
+/* ---- search ---- */
+.sbox{position:relative;margin:12px 0}
+.sbox input{width:100%;padding:12px 38px 12px 40px;border-radius:12px;border:1px solid var(--line);
+  background:var(--card);font-size:16px;outline:none}
+.sbox input:focus{border-color:var(--accent)}
+.sbox .ic{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--ink3);font-size:15px}
+.sbox .clr{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:26px;height:26px;
+  border-radius:50%;background:var(--chip);color:var(--ink2);display:none;place-items:center;font-size:13px}
+.sbox.has .clr{display:grid}
+
+/* ---- map ---- */
+.mapwrap{position:relative;background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+  overflow:hidden;box-shadow:var(--sh);touch-action:none}
+.mapin{position:relative;transform-origin:0 0;will-change:transform}
+.mapin img{display:block;width:100%;height:auto;pointer-events:none;user-select:none}
+.pin{position:absolute;transform:translate(-50%,-50%);display:grid;place-items:center;
+  border-radius:50%;border:2.5px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.35);
+  color:#fff;font-weight:800;letter-spacing:-.03em;cursor:pointer}
+.pin b{display:block;line-height:1}
+.pin i{position:absolute;bottom:-7px;left:50%;transform:translateX(-50%);
+  background:#fff;color:#191714;font-style:normal;font-weight:800;font-size:9px;
+  padding:0 4px;border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,.3);white-space:nowrap}
+.mzoom{position:absolute;right:10px;bottom:10px;display:flex;flex-direction:column;gap:6px;z-index:5}
+.mzoom button{width:34px;height:34px;border-radius:9px;background:var(--card);border:1px solid var(--line);
+  box-shadow:var(--sh);font-size:17px;font-weight:600;display:grid;place-items:center}
+.maphint{font-size:11.5px;color:var(--ink3);text-align:center;margin:7px 0 0}
+
+/* ---- cards / list ---- */
+.sect{margin:20px 0 9px;font-size:12px;font-weight:700;color:var(--ink3);letter-spacing:.04em}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh);overflow:hidden}
+.card+.card{margin-top:10px}
+.pad{padding:14px}
+.hallcard{display:flex;align-items:center;gap:12px;padding:13px 14px;width:100%;text-align:left;border-bottom:1px solid var(--line2)}
+.hallcard:last-child{border-bottom:0}
+.hbadge{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font-weight:800;font-size:15px;color:#fff;flex:none;letter-spacing:-.04em}
+.hmain{flex:1;min-width:0}
+.hmain .nm{font-weight:700;font-size:15px;letter-spacing:-.01em}
+.hmain .ds{font-size:12.5px;color:var(--ink2);margin-top:2px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.45}
+.chev{color:var(--ink3);font-size:16px;flex:none}
+
+.row{display:flex;gap:11px;padding:12px 14px;border-bottom:1px solid var(--line2);width:100%;text-align:left;align-items:flex-start}
+.row:last-child{border-bottom:0}
+.row .st{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;font-weight:700;
+  background:var(--chip);color:var(--ink2);padding:3px 6px;border-radius:7px;flex:none;margin-top:1px;white-space:nowrap}
+.row .bd{flex:1;min-width:0}
+.row .nm{font-weight:650;font-size:14.5px;letter-spacing:-.01em;word-break:break-word;line-height:1.35}
+.row .mt{font-size:12px;color:var(--ink2);margin-top:3px;display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.row .rt{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:4px;margin-top:1px}
+
+.tag{font-size:10.5px;font-weight:700;padding:2px 6px;border-radius:6px;background:var(--chip);color:var(--ink2);white-space:nowrap}
+.tag.sang{background:rgba(184,50,44,.12);color:var(--accent)}
+.tag.jung{background:rgba(224,123,26,.14);color:#a65c10}
+.tag.ferm{background:rgba(47,125,79,.13);color:var(--ok)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .tag.jung{color:var(--accent2)}}
+.star{font-size:17px;line-height:1;color:var(--line);padding:2px}
+.star.on{color:#e8a020}
+.scorepill{font-size:10.5px;font-weight:800;padding:2px 7px;border-radius:20px;background:var(--accent);color:#fff}
+
+/* ---- chips ---- */
+.chips{display:flex;gap:7px;overflow-x:auto;padding:2px 0 3px;margin:0 -16px;padding-left:16px;padding-right:16px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;font-size:12.5px;font-weight:600;padding:7px 12px;border-radius:20px;
+  background:var(--card);border:1px solid var(--line);color:var(--ink2);white-space:nowrap}
+.chip.on{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.chip .n{opacity:.6;margin-left:3px;font-weight:700}
+
+/* ---- booth detail ---- */
+.bhero{padding:16px 14px}
+.bhero h1{margin:0;font-size:20px;line-height:1.3;letter-spacing:-.02em;word-break:break-word}
+.bhero .loc{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.bigst{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:14px;font-weight:800;
+  background:var(--ink);color:var(--bg);padding:4px 9px;border-radius:8px}
+.kv{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid var(--line2);font-size:13.5px}
+.kv:last-child{border-bottom:0}
+.kv dt{flex:none;width:56px;color:var(--ink3);font-size:12px;font-weight:600;padding-top:1px}
+.kv dd{margin:0;flex:1;min-width:0;word-break:break-word;line-height:1.5}
+.brief{font-size:14px;line-height:1.72;color:var(--ink);word-break:keep-all}
+
+/* score */
+.scorerow{display:flex;gap:6px}
+.sbtn{flex:1;padding:11px 2px;border-radius:11px;border:1.5px solid var(--line);background:var(--card);
+  text-align:center;font-weight:800;font-size:16px;color:var(--ink3);transition:.12s}
+.sbtn.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.slabels{display:flex;justify-content:space-between;font-size:10.5px;color:var(--ink3);margin-top:6px}
+.scorenow{font-size:12.5px;color:var(--ink2);margin-top:7px;font-weight:600;min-height:18px}
+
+/* checks */
+.checks{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ck{display:flex;align-items:center;gap:8px;padding:11px 12px;border-radius:11px;
+  border:1.5px solid var(--line);background:var(--card);font-size:13.5px;font-weight:600;text-align:left}
+.ck .bx{width:19px;height:19px;border-radius:6px;border:1.5px solid var(--line);flex:none;display:grid;place-items:center;font-size:11px;color:transparent}
+.ck.on{border-color:var(--ok);background:rgba(47,125,79,.08)}
+.ck.on .bx{background:var(--ok);border-color:var(--ok);color:#fff}
+
+/* dept */
+.depts{display:flex;flex-wrap:wrap;gap:7px}
+.dchip{font-size:13px;font-weight:600;padding:8px 13px;border-radius:20px;border:1.5px solid var(--line);background:var(--card);color:var(--ink2)}
+.dchip.on{background:var(--blue);border-color:var(--blue);color:#fff}
+
+textarea.memo{width:100%;min-height:96px;padding:12px;border-radius:11px;border:1px solid var(--line);
+  background:var(--bg);resize:vertical;font-size:15px;line-height:1.6;outline:none}
+textarea.memo:focus{border-color:var(--accent)}
+
+/* photos */
+.photos{display:flex;gap:9px;flex-wrap:wrap}
+.ph{position:relative;width:96px;height:66px;border-radius:10px;overflow:hidden;background:var(--chip);border:1px solid var(--line)}
+.ph img{width:100%;height:100%;object-fit:cover;display:block}
+.ph .del{position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;
+  background:rgba(0,0,0,.62);color:#fff;font-size:11px;display:grid;place-items:center}
+.ph .up{position:absolute;inset:0;background:rgba(0,0,0,.45);color:#fff;font-size:10px;
+  display:grid;place-items:center;font-weight:700}
+.addph{width:96px;height:66px;border-radius:10px;border:1.5px dashed var(--line);display:grid;place-items:center;
+  color:var(--ink3);font-size:11.5px;font-weight:600;text-align:center;line-height:1.3;background:var(--card)}
+
+/* board */
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:13px;box-shadow:var(--sh)}
+.stat .v{font-size:25px;font-weight:800;letter-spacing:-.03em;line-height:1.1}
+.stat .l{font-size:11.5px;color:var(--ink3);margin-top:3px;font-weight:600}
+.stat.tap{text-align:left;width:100%;transition:.12s;cursor:pointer}
+.stat.tap.on{background:var(--ink);border-color:var(--ink)}
+.stat.tap.on .v,.stat.tap.on .l{color:var(--bg)}
+.bar{height:6px;border-radius:4px;background:var(--line2);overflow:hidden;margin-top:6px}
+.bar i{display:block;height:100%;background:var(--accent);border-radius:4px}
+
+/* tabbar */
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:50;background:var(--card);
+  border-top:1px solid var(--line);padding-bottom:var(--safe)}
+.tabs .in{max-width:820px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr)}
+.tab .ic{font-size:19px;display:block;line-height:1.25}
+.tab{padding:9px 0 8px;text-align:center;color:var(--ink3);font-size:10.5px;font-weight:650}
+.tab .ic{font-size:19px;display:block;line-height:1.25}
+.tab.on{color:var(--accent)}
+
+/* sheet */
+.sheetbg{position:fixed;inset:0;background:rgba(0,0,0,.42);z-index:60;opacity:0;pointer-events:none;transition:.2s}
+.sheetbg.on{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:61;background:var(--card);
+  border-radius:20px 20px 0 0;transform:translateY(100%);transition:transform .24s cubic-bezier(.3,.8,.3,1);
+  max-height:84vh;overflow-y:auto;padding-bottom:calc(16px + var(--safe));box-shadow:0 -6px 30px rgba(0,0,0,.2);
+  overscroll-behavior:contain}
+@supports (height:1dvh){.sheet{max-height:84dvh}}
+.sheet.on{transform:translateY(0)}
+.sheet .grab{width:38px;height:4px;border-radius:3px;background:var(--line);margin:9px auto 4px}
+.sheet .inner{max-width:820px;margin:0 auto;padding:6px 18px 0}
+
+.btn{display:block;width:100%;padding:14px;border-radius:12px;background:var(--ink);color:var(--bg);
+  font-weight:700;font-size:15px;text-align:center;margin-top:14px}
+.btn.alt{background:var(--chip);color:var(--ink)}
+.btn.acc{background:var(--accent);color:#fff}
+
+.note{font-size:12px;color:var(--ink3);line-height:1.6}
+.empty{text-align:center;padding:44px 20px;color:var(--ink3);font-size:13.5px;line-height:1.7}
+.banner.ro{background:rgba(184,50,44,.1);color:var(--accent);border-color:rgba(184,50,44,.3)}
+.banner{margin:12px 0;padding:11px 13px;border-radius:11px;font-size:12.5px;line-height:1.55;
+  background:rgba(224,123,26,.12);color:#8a4c08;border:1px solid rgba(224,123,26,.28)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .banner{color:var(--accent2)}}
+
+
+
+/* ---- 프로그램 ---- */
+.dayhdr{display:flex;align-items:center;gap:9px;width:100%;text-align:left;padding:12px 14px;
+  background:var(--card);border:1px solid var(--line);border-radius:var(--r);margin-bottom:8px;box-shadow:var(--sh)}
+.dayhdr.on{margin-bottom:8px}
+.dayhdr b{font-size:14.5px;font-weight:750;letter-spacing:-.01em}
+.dayhdr .cnt{margin-left:auto;font-size:11.5px;color:var(--ink3);font-weight:650}
+.dayhdr .arr{color:var(--ink3);font-size:12px}
+.todaytag{font-size:10px;font-weight:800;padding:2px 7px;border-radius:20px;background:var(--accent);color:#fff}
+.row.trow .nm{font-size:14px;line-height:1.4}
+.row.trow.now{background:rgba(184,50,44,.06)}
+.row.trow .st{font-variant-numeric:tabular-nums}
+
+
+/* ---- 로그인 ---- */
+#authwrap{position:fixed;inset:0;z-index:999;background:var(--bg);display:grid;place-items:center;padding:24px}
+.authbox{width:100%;max-width:340px;text-align:center}
+.authci{width:72px;height:auto;display:block;margin:0 auto 20px}
+.authbox h1{margin:0;font-size:22px;font-weight:800;letter-spacing:-.02em}
+.authsub{margin:6px 0 22px;font-size:13px;color:var(--ink3)}
+.autherr{margin:0 0 14px;padding:10px 12px;border-radius:10px;font-size:12.5px;line-height:1.5;
+  background:rgba(184,50,44,.1);color:var(--accent);text-align:left}
+#authwrap input{width:100%;padding:13px 14px;margin-bottom:9px;border-radius:11px;
+  border:1px solid var(--line);background:var(--card);font-size:16px;outline:none}
+#authwrap input:focus{border-color:var(--accent)}
+.authbtn{width:100%;padding:14px;border-radius:12px;background:var(--accent);color:#fff;
+  font-weight:700;font-size:15px;margin-top:6px}
+.authbtn:disabled{opacity:.6}
+.authlink{width:100%;padding:12px;margin-top:8px;font-size:13px;color:var(--ink3);font-weight:600;background:none}
+
+/* ---- 앱 소개 ---- */
+.intro{padding:22px 4px 24px;text-align:center}
+.intro .ci{width:84px;height:auto;display:block;margin:10px auto 22px}
+.intro .ev{font-size:25px;font-weight:800;letter-spacing:-.025em;line-height:1.2}
+.intro .dt{margin-top:9px;font-size:15px;font-weight:700;color:var(--ink)}
+.intro .pl{margin-top:4px;font-size:12.5px;color:var(--ink3)}
+.intro .dd{display:inline-block;margin-top:13px;padding:5px 13px;border-radius:20px;
+  background:var(--accent);color:#fff;font-size:12.5px;font-weight:800;letter-spacing:.02em}
+.intro .line{height:1px;background:var(--line);margin:26px 10px}
+.intro h2{margin:0;font-size:17px;font-weight:800;letter-spacing:-.02em}
+.intro .lead{margin:11px 6px 0;font-size:14px;line-height:1.75;color:var(--ink2);word-break:keep-all}
+.intro .nums{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:22px}
+.intro .nums div{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+  padding:13px 4px;box-shadow:var(--sh)}
+.intro .nums b{display:block;font-size:21px;font-weight:800;letter-spacing:-.03em;line-height:1.15}
+.intro .nums span{display:block;font-size:11px;color:var(--ink3);margin-top:3px;font-weight:650}
+.intro .how{margin-top:22px;text-align:left;display:grid;gap:10px}
+.intro .how div{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+  padding:14px 15px;box-shadow:var(--sh);display:grid;grid-template-columns:30px 1fr;
+  grid-template-rows:auto auto;column-gap:10px;align-items:center}
+.intro .how i{grid-row:1/3;font-style:normal;font-size:21px;color:var(--accent);text-align:center}
+.intro .how b{font-size:14.5px;font-weight:750;letter-spacing:-.01em}
+.intro .how p{margin:4px 0 0;font-size:12.5px;line-height:1.6;color:var(--ink2);word-break:keep-all}
+
+/* ---- 홀 도면 ---- */
+.gmap{background:var(--card);margin-top:10px;position:relative;overflow:hidden}
+.gmap .mapin{position:absolute;inset:0;width:100%;height:100%}
+.gmap svg{display:block;width:100%;height:100%}
+.gmap.big{width:100%;max-height:70vh;min-height:300px}
+.gmap.small{width:100%;max-height:34vh;min-height:180px}
+@supports (height:1dvh){.gmap.big{max-height:70dvh}.gmap.small{max-height:34dvh}}
+.mapwrap{touch-action:pan-y;overscroll-behavior:contain}
+.mapwrap.zoomed{touch-action:none}
+polygon.bt{fill:var(--line2);stroke:var(--line);stroke-width:.6;vector-effect:non-scaling-stroke}
+polygon.k0{fill:#b9b2a5;stroke:#8d8577;cursor:pointer}
+polygon.k2{fill:var(--accent2);fill-opacity:.55;stroke:var(--accent2);cursor:pointer}
+polygon.k1{fill:var(--accent);fill-opacity:.7;stroke:var(--accent);cursor:pointer}
+polygon.mk{stroke:#e8a020;stroke-width:2.2}
+polygon.sel{fill:#1b8a4b;fill-opacity:1;stroke:#0d3d22;stroke-width:3}
+.glegend{position:absolute;left:8px;bottom:8px;display:flex;gap:9px;flex-wrap:wrap;
+  background:var(--card);border:1px solid var(--line);border-radius:9px;padding:5px 8px;
+  font-size:10px;color:var(--ink2);box-shadow:var(--sh);z-index:4}
+.glegend span{display:flex;align-items:center;gap:3px;white-space:nowrap}
+.glegend i{width:9px;height:9px;border-radius:2px;display:block}
+.glegend i.bt{background:var(--line2);border:1px solid var(--line)}
+.glegend i.k0{background:#b9b2a5}
+.glegend i.k2{background:var(--accent2);opacity:.7}
+.glegend i.k1{background:var(--accent)}
+polygon.zf{fill-opacity:.24;pointer-events:none}
+polygon.zl{fill:none;stroke-width:3;stroke-opacity:.95;vector-effect:non-scaling-stroke;pointer-events:none}
+.zpill{display:inline-flex;align-items:center;justify-content:center;min-width:19px;height:19px;border-radius:6px;font-size:11px;font-weight:800;color:#fff;margin-right:5px;padding:0 4px}
+polygon.tap{cursor:pointer}
+polygon.xn{fill:#6f9fd8;fill-opacity:.55;stroke:#2a5d9f}
+.tag.iv{background:rgba(27,138,75,.14);color:#1b8a4b}
+.tag.su{background:rgba(42,93,159,.14);color:var(--blue)}
+.maptoggle{display:flex;gap:8px;align-items:center;margin-top:12px}
+.maptoggle button{flex:1;padding:9px;border-radius:10px;border:1px solid var(--line);
+  background:var(--card);font-size:12.5px;font-weight:650;color:var(--ink2)}
+.maptoggle button.on{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.hide{display:none!important}
+</style>
+
+<div class="top"><div class="in" id="topbar"></div></div>
+<div class="wrap" id="view"></div>
+<nav class="tabs"><div class="in" id="tabbar"></div></nav>
+<div class="sheetbg" id="shbg"></div>
+<div class="sheet" id="sheet"><div class="grab"></div><div class="inner" id="shin"></div></div>
+<input type="file" id="cam" accept="image/*" capture="environment" class="hide">
+<script>
+"use strict";
+/* ============ 상수 ============ */
+const HALLS=["4","5A","1","2","3","6A","6","4A","7","5B","8","5C"];
+const SCORE_LABEL={1:"관심 없음",2:"참고",3:"흥미로움",4:"개발 참고 가치",5:"반드시 후속 검토"};
+const CHECKS=[["v","방문 완료"],["t","시식함"],["p","샘플 수령"],["f","팔로업 필요"]];
+const CHECKS_T=[["v","참석함"],["t","자료 받음"],["p","발표자 접촉"],["f","팔로업 필요"]];
+const SCORE_LABEL_T={1:"관심 없음",2:"참고",3:"흥미로움",4:"개발 참고 가치",5:"반드시 후속 검토"};
+const DEFAULT_DEPTS=["우리맛연구실","식품개발연구실","우리발효연구실"];
+const OPEN=new Date("2026-10-17T00:00:00+02:00");
+const LS="sial26.v1";
+
+/* ============ 상태 ============ */
+const S={
+  idx:null, halls:null, hall:{}, byId:{}, geo:{}, extra:{}, zone:{}, showZone:false, talks:null, dayOpen:null,
+  me:null, meId:null, mine:{b:{}}, team:{}, depts:DEFAULT_DEPTS.slice(),
+  db:null, user:null, assets:null, dl:null,
+  canWrite:true, online:navigator.onLine, dirty:false, usage:null,
+  q:"", hallQ:"", filt:"all", mineFilt:"all", sort:"rec", route:["map"], showMap:true, showBoothMap:true
+};
+
+/* ============ 유틸 ============ */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const hcolor=h=>{const v=(S.halls&&S.halls[h])||{};const n=v.n||0;
+  return n>=250?"var(--accent)":n>=100?"var(--accent2)":"#6b6459";};
+function dday(){const d=Math.ceil((OPEN-new Date())/864e5);return d>0?"D-"+d:d===0?"D-DAY":"개최 중/종료";}
+function debounce(f,ms){let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>f(...a),ms);};}
+
+/* ============ IndexedDB (캐시 + 사진) ============ */
+let _idb=null;
+function idb(){ if(_idb)return _idb;
+  _idb=new Promise((res,rej)=>{ let r;
+    try{ r=indexedDB.open("sial26",1);}catch(e){return res(null);}
+    r.onupgradeneeded=()=>{const d=r.result;
+      if(!d.objectStoreNames.contains("kv"))d.createObjectStore("kv");
+      if(!d.objectStoreNames.contains("ph"))d.createObjectStore("ph");};
+    r.onsuccess=()=>res(r.result); r.onerror=()=>res(null);
+  }); return _idb;
+}
+async function kvGet(store,k){ const d=await idb(); if(!d)return null;
+  return new Promise(r=>{try{const q=d.transaction(store).objectStore(store).get(k);
+    q.onsuccess=()=>r(q.result??null);q.onerror=()=>r(null);}catch(e){r(null);}}); }
+async function kvSet(store,k,v){ const d=await idb(); if(!d)return;
+  return new Promise(r=>{try{const t=d.transaction(store,"readwrite");t.objectStore(store).put(v,k);
+    t.oncomplete=()=>r();t.onerror=()=>r();}catch(e){r();}}); }
+async function kvDel(store,k){ const d=await idb(); if(!d)return;
+  return new Promise(r=>{try{const t=d.transaction(store,"readwrite");t.objectStore(store).delete(k);
+    t.oncomplete=()=>r();t.onerror=()=>r();}catch(e){r();}}); }
+
+/* ============ 데이터 로딩 (네트워크 → 캐시 폴백) ============ */
+async function loadJSON(file){
+  try{
+    const r=await fetch(file,{cache:"force-cache"});
+    if(!r.ok) throw 0;
+    const j=await r.json();
+    kvSet("kv","f:"+file,j);
+    return j;
+  }catch(e){
+    const c=await kvGet("kv","f:"+file);
+    if(c) return c;
+    throw new Error("데이터를 불러오지 못했습니다 ("+file+")");
+  }
+}
+async function needHalls(){ if(!S.halls) S.halls=await loadJSON("halls.json"); return S.halls; }
+async function needIdx(){ if(!S.idx){ S.idx=await loadJSON("index.json");
+    S.idx.forEach(x=>{S.byId[x.i]=x;}); } return S.idx; }
+async function needHall(h){ if(!S.hall[h]){ const d=await loadJSON("hall-"+h+".json");
+    S.hall[h]=d; d.forEach(b=>{S.byId[b.id]=Object.assign(S.byId[b.id]||{},{full:b});}); }
+  return S.hall[h]; }
+async function getBooth(id){
+  if(S.byId[id]&&S.byId[id].full) return S.byId[id].full;
+  await needIdx();
+  const meta=S.byId[id]; if(!meta) return null;
+  await needHall(meta.h||"NA");
+  return (S.byId[id]&&S.byId[id].full)||null;
+}
+
+/* ============ 로컬 미러 ============ */
+function lsLoad(){ try{const j=JSON.parse(localStorage.getItem(LS)||"null");
+  if(j&&j.b) S.mine=j; if(j&&j.depts) S.depts=j.depts;}catch(e){} }
+function lsSave(){ try{localStorage.setItem(LS,JSON.stringify({b:S.mine.b,depts:S.depts,t:Date.now()}));}catch(e){} }
+
+/* ============ 캡슐 초기화 ============ */
+async function initCaps(){
+  if(!window.claude||!claude.use) return;
+  const [db,user,assets,dl]=await Promise.all([
+    claude.use("db").catch(()=>null), claude.use("user").catch(()=>null),
+    claude.use("assets").catch(()=>null), claude.use("downloads").catch(()=>null)]);
+  S.db=db; S.user=user; S.assets=assets; S.dl=dl;
+  if(user){ try{ S.meId=await user.id(); S.me=await user.me(); }catch(e){}
+            try{ const c=await user.can("data.write"); S.canWrite=(c===false)?false:(c===true?true:S.canWrite); }catch(e){}
+            paintSync(); }
+  if(db&&S.meId){
+    try{ const s=await db.doc("notes/"+S.meId).get(); const d=s&&s.exists?s.data():null;
+         if(d&&d.b){ S.mine=mergeMine(S.mine,d); lsSave(); } }catch(e){}
+    try{ const s=await db.doc("config/depts").get(); const c=s&&s.exists?s.data():null;
+         if(c&&Array.isArray(c.list)&&c.list.length){ S.depts=c.list.slice(); lsSave(); } }catch(e){}
+    try{ db.doc("config/depts").onSnapshot(s=>{ const c=s&&s.exists?s.data():null;
+         if(c&&Array.isArray(c.list)&&c.list.length){ S.depts=c.list.slice(); lsSave();
+           if(S.route[0]==="booth"||S.route[0]==="settings") render(); } },()=>{}); }catch(e){}
+  }
+  if(S.assets){ S.assets.list().then(r=>{S.usage=r.usage;}).catch(()=>{}); }
+  flushPhotos();
+}
+function mergeMine(local,remote){
+  const out={b:Object.assign({},remote.b||{})};
+  for(const k in (local.b||{})){
+    const a=local.b[k];
+    if(!out.b[k] || (a.u||0) >= ((out.b[k].u)||0)) out.b[k]=a;
+  }
+  return out;
+}
+
+/* ============ 저장 ============ */
+const saveRemote=debounce(async()=>{
+  if(!S.db||!S.meId){S.dirty=true;return;}
+  try{ await S.db.doc("notes/"+S.meId).set({b:S.mine.b,u:Date.now()}); S.dirty=false; }
+  catch(e){ S.dirty=true; }
+  paintSync();
+},700);
+function entry(id){ if(!S.mine.b[id]) S.mine.b[id]={}; return S.mine.b[id]; }
+function touch(id){ const e=entry(id); e.u=Date.now();
+  const empty=!e.note&&!e.star&&!e.s&&!(e.d||[]).length&&!Object.keys(e.c||{}).length
+    &&!(e.m||"").trim()&&!(e.p||[]).length&&!(e.nm||"").trim();
+  if(empty) delete S.mine.b[id];
+  lsSave(); saveRemote(); paintSync(); }
+function paintSync(){ const el=document.getElementById("syncdot");
+  if(el){
+    el.textContent = (S.canWrite===false) ? "읽기 전용" : (S.dirty ? "미동기" : (S.db?"동기화됨":"로컬 저장"));
+    el.style.color = (S.canWrite===false||S.dirty) ? "var(--accent)" : "var(--ink3)";
+  }
+  const v=document.getElementById("view");
+  if(v && S.canWrite===false && !document.getElementById("rob")){
+    const d=document.createElement("div"); d.id="rob"; d.className="banner ro";
+    d.innerHTML='<b>읽기 전용으로 열렸습니다.</b><br>기록은 이 기기에만 저장되고 <b>팀에 공유되지 않습니다.</b>'
+      +' 공유 설정에서 <b>편집</b> 권한을 받아야 합니다.';
+    v.insertBefore(d, v.firstChild);
+  }
+  if(S.canWrite!==false){ const b=document.getElementById("rob"); if(b) b.remove(); }
+}
+
+/* ============ 사진 ============ */
+function compress(file){ return new Promise((res,rej)=>{
+  const img=new Image(), u=URL.createObjectURL(file);
+  img.onload=()=>{ URL.revokeObjectURL(u);
+    const M=1400, sc=Math.min(1,M/Math.max(img.width,img.height));
+    const w=Math.round(img.width*sc), h=Math.round(img.height*sc);
+    const c=document.createElement("canvas"); c.width=w; c.height=h;
+    c.getContext("2d").drawImage(img,0,0,w,h);
+    c.toBlob(b=>b?res(b):rej(new Error("압축 실패")),"image/jpeg",0.75);
+  };
+  img.onerror=()=>{URL.revokeObjectURL(u);rej(new Error("이미지를 읽지 못했습니다"));};
+  img.src=u;
+});}
+async function addPhoto(boothId,file){
+  let blob; try{ blob=await compress(file); }catch(e){ askConfirm(e.message||"사진을 처리하지 못했습니다.",()=>{},"확인"); return; }
+  const tmp="t"+Date.now()+Math.random().toString(36).slice(2,7);
+  await kvSet("ph",tmp,blob);
+  const e=entry(boothId); e.p=e.p||[]; e.p.push({k:tmp,pending:1});
+  touch(boothId); render();
+  flushPhotos();
+}
+let _flushing=false;
+async function flushPhotos(){
+  if(_flushing||!S.assets)return; _flushing=true;
+  try{
+    for(const bid in S.mine.b){
+      const ph=S.mine.b[bid].p||[];
+      for(const p of ph){
+        if(!p.pending)continue;
+        const blob=await kvGet("ph",p.k);
+        if(!blob){ p.pending=0; p.gone=1; continue; }
+        try{ const r=await S.assets.upload(blob,{type:"image/jpeg"});
+             p.id=r.id; p.pending=0;
+             S.mine.b[bid].u=Date.now(); lsSave(); saveRemote();
+             S.assets.list().then(x=>{S.usage=x.usage;}).catch(()=>{});
+        }catch(err){
+          if(err&&(err.code==="quota_or_state"||err.code==="too_large")){ p.err=err.code; p.pending=0; }
+          else { _flushing=false; return; }   /* 네트워크/레이트 — 다음 기회에 */
+        }
+      }
+    }
+  } finally { _flushing=false; if(S.route[0]==="booth")render(); }
+}
+async function photoURL(p){
+  if(p.k){ const b=await kvGet("ph",p.k); if(b) return URL.createObjectURL(b); }
+  if(p.id && window.claude && claude.blobURL){ const u=await claude.blobURL(p.id); if(u) return u; }
+  return null;
+}
+async function delPhoto(boothId,i){
+  const e=entry(boothId), p=(e.p||[])[i]; if(!p)return;
+  askConfirm("이 사진을 삭제할까요?",()=>delPhoto2(boothId,i)); }
+async function delPhoto2(boothId,i){
+  const e=entry(boothId), p=(e.p||[])[i]; if(!p)return;
+  if(p.k) kvDel("ph",p.k);
+  if(p.id&&S.assets){ try{ await S.assets.delete(p.id); }catch(err){} }
+  e.p.splice(i,1); touch(boothId); render();
+}
+</script>
+<script>
+/* ============ 라우터 ============ */
+function go(...r){ location.hash="#/"+r.join("/"); }
+function parseHash(){ const h=(location.hash||"#/map").replace(/^#\/?/,"");
+  const p=h.split("/").filter(Boolean); return p.length?p:["map"]; }
+window.addEventListener("hashchange",()=>{ S.route=parseHash(); window.scrollTo(0,0); render(); });
+
+/* ============ 공통 조각 ============ */
+function relTag(r){ return r==="상"?'<span class="tag sang">핵심 분류</span>':r==="중"?'<span class="tag jung">인접 분류</span>':""; }
+function fermTag(b){ const f=b.ferm||b.f;
+  return (f==="핵심")?'<span class="tag ferm">발효 핵심</span>':(f==="부분")?'<span class="tag ferm">발효 부분</span>':""; }
+function rowHTML(o){
+  const id=o.i||o.id, nm=o.n||o.exh, st=o.s||o.stand||"", cat=o.c||o.cat||"";
+  const e=S.mine.b[id]||{};
+  return '<button class="row" onclick="go(\'booth\',\''+id+'\')">'
+    +'<span class="st">'+esc(st||"—")+'</span><span class="bd">'
+    +'<span class="nm">'+esc(nm)+'</span>'
+    +'<span class="mt">'
+    +((S.sort==="zone"&&(o.zi||o.zone))?'<span class="zpill" style="background:'+ZC[((o.zi||o.zone)-1)%5]+'">'+(o.zi||o.zone)+'</span>':'')
+    +relTag(o.r||o.rel)+fermTag(o)
+    +((o.iv||o.innov)?'<span class="tag iv">SIAL Innovation</span>':'')
+    +((o.su||o.startup)?'<span class="tag su">Startup</span>':'')
+    +'<span class="tag">'+esc(cat)+'</span>'
+    +((e.d||[]).length?'<span class="tag" style="background:rgba(42,93,159,.14);color:var(--blue)">'+esc(e.d.join(" · "))+'</span>':"")
+    +((e.c&&e.c.v)?'<span class="tag" style="background:rgba(47,125,79,.13);color:var(--ok)">방문</span>':"")
+    +'</span></span><span class="rt">'
+    +(e.star?'<span class="star on">★</span>':'')
+    +(e.s?'<span class="scorepill">'+e.s+'</span>':'')
+    +((e.m||"").trim()?'<span class="tag">메모</span>':'')
+    +'</span></button>';
+}
+function listWrap(rows,limit){
+  if(!rows.length) return '<div class="empty">결과가 없습니다.</div>';
+  const shown=rows.slice(0,limit||300);
+  return '<div class="card">'+shown.join("")+'</div>'
+    +(rows.length>shown.length?'<p class="note" style="text-align:center;margin:12px 0">'
+      +shown.length+' / '+rows.length+'건 표시 — 검색어를 좁혀 주세요.</p>':'');
+}
+function score(o){ const id=o.i||o.id, e=S.mine.b[id]||{};
+  const r=(o.r||o.rel)==="상"?0:(o.r||o.rel)==="중"?1:2;
+  return [ e.star?0:1, e.s?-(e.s):1, r, o.a||"ZZ", o.o||9999 ]; }
+function cmpArr(a,b){ for(let i=0;i<a.length;i++){ if(a[i]<b[i])return -1; if(a[i]>b[i])return 1; } return 0; }
+
+/* ============ 검색 ============ */
+function matches(o,q){
+  if(!q)return true;
+  const t=(o.n+" "+o.s+" "+o.c+" "+o.q).toLowerCase();
+  return q.split(/\s+/).filter(Boolean).every(w=>t.includes(w));
+}
+
+/* ============ 뷰: 지도 ============ */
+let MZ={s:1,x:0,y:0};
+async function viewMap(){
+  await needHalls();
+  $("#topbar").innerHTML='<div style="flex:1"><div class="ttl">SIAL Paris 2026</div>'
+    +'<div class="sub">10/17–21 · Paris Nord Villepinte · '+dday()+'</div></div>'
+    +'<div class="sub" id="syncdot"></div>';
+  const M=S.halls._map;
+  const pins=HALLS.filter(h=>S.halls[h]&&S.halls[h].xy).map(h=>{
+    const v=S.halls[h], sz=Math.max(34,Math.min(50,26+v.n/18));
+    return '<span class="pin" style="left:'+(v.xy[0]/M.w*100)+'%;top:'+(v.xy[1]/M.h*100)+'%;'
+      +'width:'+sz+'px;height:'+sz+'px;font-size:'+(sz*.36)+'px;background:'+hcolor(h)+'" '
+      +'onclick="hallSheet(\''+h+'\')"><b>'+h+'</b><i>'+v.n+'곳</i></span>';
+  }).join("");
+  const cards=HALLS.filter(h=>S.halls[h]).map(h=>{ const v=S.halls[h];
+    return '<button class="hallcard" onclick="hallSheet(\''+h+'\')">'
+      +'<span class="hbadge" style="background:'+hcolor(h)+'">'+h+'</span>'
+      +'<span class="hmain"><span class="nm">홀 '+h+'</span>'
+      +'<span class="ds">'+v.cats.slice(0,3).map(c=>esc(c[0])).join(" · ")
+      +(v.ferm_maker?' <span style="color:var(--ok)">· 발효 '+v.ferm_maker+'</span>':'')+'</span></span>'
+      +'<span class="rt" style="display:flex;flex:none;flex-direction:column;align-items:flex-end;gap:3px">'
+      +'<span style="font-size:15px;font-weight:800;letter-spacing:-.02em">'+v.n+'<span class="sub" style="font-weight:600">곳</span></span></span>'
+      +'<span class="chev">›</span></button>';
+  }).join("");
+  const q=S.q.trim().toLowerCase();
+  let results="";
+  if(q){ await needIdx();
+    const hit=S.idx.filter(o=>matches(o,q)).sort((a,b)=>cmpArr(score(a),score(b)));
+    results='<div class="sect">전체 검색 — '+hit.length+'건</div>'+listWrap(hit.map(rowHTML),200);
+  }
+  $("#view").innerHTML=
+    '<div class="sbox'+(S.q?' has':'')+'"><span class="ic">⌕</span>'
+    +'<input id="gq" placeholder="출품사명 · 부스번호 · 품목 · 브랜드 검색" value="'+esc(S.q)+'" autocomplete="off">'
+    +'<button class="clr" onclick="S.q=\'\';render()">✕</button></div>'
+    + (q? results :
+      '<div class="mapwrap" id="mw"><div class="mapin" id="mw-in"><img src="map.png" alt="SIAL 도면">'+pins+'</div>'
+      +'<div class="mzoom"><button onclick="mzoom(\'mw\',1.4)">+</button><button onclick="mzoom(\'mw\',1/1.4)">−</button>'
+      +'<button onclick="mreset(\'mw\')" style="font-size:12px">⤢</button></div></div>'
+      +'<p class="maphint">홀을 눌러 부스 목록으로 · 두 손가락으로 확대</p>'
+      +'<div class="sect">홀 목록 — DB 등재 출품사 수</div><div class="card">'+cards+'</div>'
+      +'<p class="note" style="margin:14px 2px 0">DB 등재 출품사 '+(S.idx?S.idx.length:2805)+'곳. '
+      +'분류 표시는 우리 8개 분류와의 일치 여부이며 부스별 개별 검증 결과는 아닙니다. '
+      +'홀 7은 핵심 분류는 적지만 치즈·유제품 발효 제조사가 147곳으로 가장 많습니다.</p>');
+  const gq=$("#gq");
+  if(gq){ gq.oninput=debounce(e=>{S.q=e.target.value;render();},200); }
+  if(!q) bindPan("mw");
+  restoreFocus(); paintSync();
+}
+let _foc=null;
+function keepFocus(){ const a=document.activeElement;
+  if(a&&["gq","hq","nd","memo"].includes(a.id)){ let p=null; try{p=a.selectionStart;}catch(e){}
+    _foc={id:a.id,p:p}; } }
+function restoreFocus(){ if(!_foc)return; const f=_foc; _foc=null;
+  const el=document.getElementById(f.id); if(!el)return;
+  el.focus(); if(f.p!=null){ try{el.setSelectionRange(f.p,f.p);}catch(e){} } }
+const PZ={};
+function pz(k){ return PZ[k]||(PZ[k]={s:1,x:0,y:0}); }
+function mzoom(k,f){ const z=pz(k); z.s=Math.max(1,Math.min(8,z.s*f)); clampPan(k); applyPan(k); }
+function mreset(k){ PZ[k]={s:1,x:0,y:0}; applyPan(k); }
+function applyPan(k){ const el=document.getElementById(k+"-in"); const z=pz(k);
+  if(el) el.style.transform="translate("+z.x+"px,"+z.y+"px) scale("+z.s+")";
+  const w=document.getElementById(k);
+  if(w) w.classList.toggle("zoomed", z.s>1.02); }
+function clampPan(k){ const w=document.getElementById(k); if(!w)return; const z=pz(k);
+  const W=w.clientWidth,H=w.clientHeight;
+  z.x=Math.min(0,Math.max(W-W*z.s,z.x)); z.y=Math.min(0,Math.max(H-H*z.s,z.y)); }
+function bindPan(k){
+  const w=document.getElementById(k); if(!w||w.dataset.bound)return; w.dataset.bound="1";
+  const pts=new Map(); let st=null, dragged=false;
+  w.addEventListener("pointerdown",e=>{
+    pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    const z=pz(k);
+    if(pts.size===1){ st={x:e.clientX,y:e.clientY,ox:z.x,oy:z.y}; dragged=false; }
+    if(pts.size===2){ const a=[...pts.values()];
+      st={pinch:1,d:Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y),s:z.s,
+          cx:(a[0].x+a[1].x)/2,cy:(a[0].y+a[1].y)/2,ox:z.x,oy:z.y}; dragged=true; }
+  });
+  w.addEventListener("pointermove",e=>{
+    if(!pts.has(e.pointerId)||!st)return;
+    pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    const a=[...pts.values()], z=pz(k);
+    if(a.length>=2&&st.pinch){
+      const d=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y); if(!d)return;
+      const ns=Math.max(1,Math.min(8,st.s*d/st.d));
+      const r=w.getBoundingClientRect(), px=st.cx-r.left, py=st.cy-r.top;
+      z.x=px-(px-st.ox)*(ns/st.s); z.y=py-(py-st.oy)*(ns/st.s); z.s=ns;
+      clampPan(k); applyPan(k); e.preventDefault();
+    } else if(a.length===1&&!st.pinch&&z.s>1){
+      const dx=a[0].x-st.x, dy=a[0].y-st.y;
+      if(!dragged&&Math.abs(dx)+Math.abs(dy)<7)return;
+      dragged=true; z.x=st.ox+dx; z.y=st.oy+dy; clampPan(k); applyPan(k); e.preventDefault();
+    }
+  },{passive:false});
+  const up=e=>{ pts.delete(e.pointerId); const z=pz(k);
+    if(!pts.size) st=null;
+    else if(pts.size===1){ const a=[...pts.values()][0]; st={x:a.x,y:a.y,ox:z.x,oy:z.y}; } };
+  w.addEventListener("pointerup",up); w.addEventListener("pointercancel",up);
+  w.addEventListener("click",e=>{ if(dragged){ e.stopPropagation(); e.preventDefault(); dragged=false; } },true);
+  w.addEventListener("wheel",e=>{ e.preventDefault(); mzoom(k,e.deltaY<0?1.12:1/1.12); },{passive:false});
+  applyPan(k);
+}
+
+/* ============ 홀 도면 (부스 폴리곤) ============ */
+const ZC=["#3e6ea6","#d69638","#609670","#9276ae","#3a9a9e"];
+async function needZone(h){ if(S.zone[h]===undefined){ try{ S.zone[h]=await loadJSON("zone-"+h+".json"); }catch(e){ S.zone[h]=null; } } return S.zone[h]; }
+async function needGeo(h){ if(!S.geo[h]){ try{ S.geo[h]=await loadJSON("geo-"+h+".json"); }catch(e){ S.geo[h]=null; } } return S.geo[h]; }
+function hallMapHTML(h,g,sel,id){
+  if(!g) return "";
+  const Z=(S.showZone&&id==="gm")?S.zone[h]:null;
+  let zfill="",zline="",zbadge="",ztop="";
+  if(Z){
+    Z.z.forEach(zz=>{ const c=ZC[zz.c];
+      zz.p.forEach(poly=>{ zfill+='<polygon class="zf" points="'+poly+'" fill="'+c+'"></polygon>';
+                           zline+='<polygon class="zl" points="'+poly+'" stroke="'+c+'"></polygon>'; });
+    });
+    g.b.forEach(b=>{ if(!b.i) return; const o=S.byId[b.i]||{}; const r=(o.full&&o.full.rel)||o.r;
+      if(r==="상"||r==="중") ztop+='<polygon class="bt '+(r==="상"?"k1":"k2")+'" points="'+b.p+'"'
+        +' onclick="go(\'booth\',\''+b.i+'\')"><title>'+esc(b.s)+'</title></polygon>'; });
+    Z.z.forEach(zz=>{ const c=ZC[zz.c];
+      const up=(zz.by>g.h-70);                       // 아래 가장자리면 라벨을 위로
+      const ly=up?(zz.by-41):(zz.by+20), ty=up?(zz.by-26):(zz.by+35);
+      zbadge+='<g class="zb">'
+        +'<rect x="'+(zz.bx-31)+'" y="'+ly+'" width="62" height="22" rx="7" fill="#fff" stroke="'+c+'" stroke-width="2.5"/>'
+        +'<text x="'+zz.bx+'" y="'+ty+'" text-anchor="middle" font-size="13" font-weight="700" fill="#3a362f">'+esc(zz.k)+' · '+zz.n+'</text>'
+        +'<circle cx="'+zz.bx+'" cy="'+zz.by+'" r="17" fill="'+c+'" stroke="#fff" stroke-width="4"/>'
+        +'<text x="'+zz.bx+'" y="'+(zz.by+6)+'" text-anchor="middle" font-size="19" font-weight="700" fill="#fff">'+zz.i+'</text>'
+        +'</g>'; });
+  }
+  const bo=g.b.map(b=>{
+    let cls="bt", extra="";
+    if(b.i){ const o=S.byId[b.i]||{}, e=S.mine.b[b.i]||{};
+      const r=(o.full&&o.full.rel)||o.r;
+      cls+= r==="상"?" k1": r==="중"?" k2":" k0";
+      if(e.star||e.s) cls+=" mk";
+      if(b.i===sel) cls+=" sel";
+      extra=' onclick="go(\'booth\',\''+b.i+'\')"';
+    } else {
+      const k=xkey(h,b.c), e=S.mine.b[k]||{};
+      if(S.mine.b[k]) cls+=" xn";
+      if(e.star||e.s) cls+=" mk";
+      if(k===sel) cls+=" sel";
+      cls+=" tap";
+      extra=' onclick="go(\'x\',\''+h+'\',\''+b.c+'\')"';
+    }
+    return '<polygon class="'+cls+'" points="'+b.p+'"'+extra+'><title>'+esc(b.s)+'</title></polygon>';
+  }).join("");
+  const M=Math.max(g.w,g.h)*0.075;
+  const vb=(-M)+' '+(-M)+' '+(g.w+M*2)+' '+(g.h+M*2);
+  const ar=Math.min(1.35,Math.max(0.56,(g.w+M*2)/(g.h+M*2)));
+  return '<div class="mapwrap gmap '+(id==="gm"?"big":"small")+'" id="'+id+'" style="aspect-ratio:'+ar.toFixed(3)+'"><div class="mapin" id="'+id+'-in">'
+    +'<svg viewBox="'+vb+'" preserveAspectRatio="xMidYMid meet">'
+    +bo+zfill+ztop+zline+zbadge+'</svg></div>'
+    +'<div class="mzoom"><button onclick="mzoom(\''+id+'\',1.5)">+</button>'
+    +'<button onclick="mzoom(\''+id+'\',1/1.5)">−</button>'
+    +'<button onclick="mreset(\''+id+'\')" style="font-size:12px">⤢</button></div>'
+    +(id==="gm"?'<div class="glegend"><span><i class="k1"></i>핵심</span><span><i class="k2"></i>인접</span>'
+      +'<span><i class="k0"></i>그 외 DB</span><span><i class="bt"></i>미등재</span></div>':'')+'</div>';
+}
+
+/* ============ 인앱 확인창 (iframe에서 confirm() 차단될 수 있음) ============ */
+function askConfirm(msg,onYes,yesLabel){
+  const bg=document.getElementById("shbg"), sh=document.getElementById("sheet");
+  document.getElementById("shin").innerHTML=
+    '<div style="padding:6px 0 4px"><p style="margin:0 0 16px;font-size:15px;line-height:1.65;white-space:pre-line">'+esc(msg)+'</p>'
+    +'<button class="btn acc" id="_yes">'+esc(yesLabel||"삭제")+'</button>'
+    +'<button class="btn alt" onclick="closeSheet()">취소</button></div>';
+  sh.classList.add("on"); bg.classList.add("on");
+  document.getElementById("_yes").onclick=()=>{ closeSheet(); setTimeout(onYes,180); };
+}
+
+/* ============ 홀 시트 ============ */
+async function hallSheet(h){
+  await needHalls(); const v=S.halls[h]; if(!v)return;
+  const mine=Object.keys(S.mine.b).length;
+  $("#shin").innerHTML='<div style="display:flex;align-items:center;gap:12px">'
+    +'<span class="hbadge" style="background:'+hcolor(h)+';width:50px;height:50px;font-size:17px">'+h+'</span>'
+    +'<div><div style="font-size:19px;font-weight:800;letter-spacing:-.02em">홀 '+h+'</div>'
+    +'<div class="sub">DB 등재 '+v.n+'곳 · 핵심 분류 '+v.sang+' · 인접 '+v.jung+'</div></div></div>'
+    +'<button class="btn acc" style="margin-top:14px" onclick="closeSheet();go(\'hall\',\''+h+'\')">부스 목록 보기 — '+v.n+'곳</button>'
+    +'<dl style="margin:14px 0 0">'
+    +'<div class="kv"><dt>주요 분류</dt><dd>'+v.cats.slice(0,4).map(c=>esc(c[0])+' <span class="sub">'+c[1]+'</span>').join(" · ")+'</dd></div>'
+    +'<div class="kv"><dt>주요 국가</dt><dd>'+v.countries.slice(0,5).map(c=>esc(c[0])+' <span class="sub">'+c[1]+'</span>').join(" · ")+'</dd></div>'
+    +'<div class="kv"><dt>발효</dt><dd>발효 관련 제조사 <b>'+v.ferm_maker+'</b>곳</dd></div>'
+    +'<div class="kv"><dt>통로</dt><dd style="font-family:ui-monospace,monospace;font-size:12.5px">'+v.aisles.join(" · ")+'</dd></div>'
+    +'</dl>'
+    +(v.top&&v.top.length?'<div class="sect" style="margin-top:16px">대표 발효 제조사</div><div class="card">'
+      +v.top.slice(0,6).map(t=>'<div class="row" style="cursor:default"><span class="st">'+esc(t.stand)+'</span>'
+      +'<span class="bd"><span class="nm" style="font-size:13.5px">'+esc(t.exh)+'</span>'
+      +'<span class="mt"><span class="tag ferm">'+esc(t.ferm_kind||t.cat)+'</span></span></span></div>').join("")+'</div>':'')
+    +'<button class="btn alt" onclick="closeSheet()">닫기</button>';
+  $("#sheet").classList.add("on"); $("#shbg").classList.add("on");
+}
+function closeSheet(){ $("#sheet").classList.remove("on"); $("#shbg").classList.remove("on"); }
+
+/* ============ 뷰: 홀 부스 목록 ============ */
+async function viewHall(h){
+  const data=await needHall(h); await needHalls();
+  const v=S.halls[h]||{n:data.length};
+  $("#topbar").innerHTML='<button class="back" onclick="history.back()">‹</button>'
+    +'<div style="flex:1"><div class="ttl">홀 '+h+'</div><div class="sub">DB 등재 '+data.length+'곳'
+    +(v.sang?' · 핵심 분류 '+v.sang:'')+'</div></div><div class="sub" id="syncdot"></div>';
+  const q=S.hallQ.trim().toLowerCase();
+  const F={all:"전체",star:"즐겨찾기",sang:"핵심 분류",iv:"Innovation",su:"Startup",noted:"기록함",unv:"미방문"};
+  let rows=data.filter(b=>{
+    const e=S.mine.b[b.id]||{};
+    if(S.filt==="star"&&!e.star)return false;
+    if(S.filt==="sang"&&b.rel!=="상")return false;
+    if(S.filt==="noted"&&!S.mine.b[b.id])return false;
+    if(S.filt==="iv"&&!b.iv)return false;
+    if(S.filt==="su"&&!b.su)return false;
+    if(S.filt==="unv"&&e.c&&e.c.v)return false;
+    if(q){ const t=(b.exh+" "+b.stand+" "+b.cat+" "+b.items+" "+b.country+" "+(b.brands||[]).join(" ")).toLowerCase();
+      if(!q.split(/\s+/).filter(Boolean).every(w=>t.includes(w)))return false; }
+    return true;
+  });
+  if(S.sort==="rec") rows.sort((a,b)=>cmpArr(score(a),score(b)));
+  else if(S.sort==="zone") rows.sort((a,b)=>cmpArr([a.zo||999999,a.aisle,a.ord],[b.zo||999999,b.aisle,b.ord]));
+  else rows.sort((a,b)=>cmpArr([a.aisle,a.ord],[b.aisle,b.ord]));
+  const cnt=k=>data.filter(b=>{const e=S.mine.b[b.id]||{};
+    return k==="all"||(k==="star"&&e.star)||(k==="sang"&&b.rel==="상")||(k==="iv"&&b.iv)||(k==="su"&&b.su)
+      ||(k==="noted"&&S.mine.b[b.id])||(k==="unv"&&!(e.c&&e.c.v));}).length;
+  const G=S.showMap===false?null:await needGeo(h);
+  if(G&&S.showZone) await needZone(h);
+  $("#view").innerHTML=
+    '<div class="sbox'+(S.hallQ?' has':'')+'"><span class="ic">⌕</span>'
+    +'<input id="hq" placeholder="이 홀에서 검색 — 출품사 · 부스번호 · 품목" value="'+esc(S.hallQ)+'" autocomplete="off">'
+    +'<button class="clr" onclick="S.hallQ=\'\';render()">✕</button></div>'
+    +'<div class="chips">'+Object.keys(F).map(k=>'<button class="chip'+(S.filt===k?" on":"")+'" onclick="S.filt=\''+k+'\';render()">'
+      +F[k]+'<span class="n">'+cnt(k)+'</span></button>').join("")
+    +'<button class="chip'+(S.sort!=="rec"?" on":"")+'" onclick="S.sort=S.sort===\'rec\'?\'zone\':(S.sort===\'zone\'?\'aisle\':\'rec\');render()">'
+      +(S.sort==="rec"?"추천순":(S.sort==="zone"?"구역 순서 ↕":"통로순 ↕"))+'</button></div>'
+    +'<div class="maptoggle"><button class="'+(S.showMap===false?'':'on')+'" onclick="S.showMap=!(S.showMap!==false);render()">'
+      +(S.showMap===false?'홀 도면 보기':'홀 도면 숨기기')+'</button>'
+      +(S.showMap===false?'':'<button class="'+(S.showZone?'on':'')+'" onclick="S.showZone=!S.showZone;render()">'
+        +(S.showZone?'구역 끄기':'구역 보기')+'</button>')+'</div>'
+    +(G?hallMapHTML(h,G,null,"gm")+'<p class="maphint">회색 부스도 누르면 기록할 수 있습니다 · 조사 DB 밖 '+(G.b.filter(x=>!x.i).length)+'곳</p>':'')
+    +'<button class="btn alt" onclick="newNote(\''+h+'\')">＋ 이 홀에서 현장 메모</button>'
+    +'<div style="height:12px"></div>'+listWrap(rows.map(rowHTML),400);
+  const el=$("#hq"); if(el) el.oninput=debounce(e=>{S.hallQ=e.target.value;render();},200);
+  if(G) bindPan("gm");
+  restoreFocus(); paintSync();
+}
+</script>
+<script>
+/* ============ 기록 카드 (부스 / 목록 밖 부스 / 자유 메모 공용) ============ */
+function bindRecord(id){
+  const m=document.getElementById("memo");
+  if(m) m.oninput=debounce(ev=>{ const t=ev.target.value; entry(id).m=t; touch(id); },500);
+  const e=S.mine.b[id]||{};
+  (e.p||[]).forEach(async(ph,i)=>{ const u=await photoURL(ph);
+    const el=document.querySelector('#phs .ph[data-i="'+i+'"] img'); if(el&&u) el.src=u; });
+}
+async function needExtra(hl){ if(!S.extra[hl]){ let d=[];
+    try{ d=await loadJSON("extra-"+hl+".json"); }catch(e){ d=[]; }
+    const m={}; d.forEach(r=>{ m[r.c]=r; }); S.extra[hl]=m; } return S.extra[hl]; }
+function xkey(hl,code){ return "x_"+hl+"_"+code; }
+function nkey(){ return "n_"+Date.now().toString(36); }
+function recordCard(id){
+  const e=S.mine.b[id]||{};
+  return '<div class="sect">내 기록</div>'
+   +'<div class="card pad">'
+     +'<div style="font-size:12.5px;font-weight:700;color:var(--ink3);margin-bottom:8px">관심 정도 <span style="font-weight:500">— 연구소 관점의 영감 · 개발 참고 가치</span></div>'
+     +'<div class="scorerow">'+[1,2,3,4,5].map(n=>'<button class="sbtn'+(e.s===n?" on":"")+'" onclick="setScore(\''+id+'\','+n+')">'+n+'</button>').join("")+'</div>'
+     +'<div class="slabels"><span>낮음</span><span>높음</span></div>'
+     +'<div class="scorenow">'+(e.s?esc(SCORE_LABEL[e.s]):"아직 평가하지 않음")+'</div>'
+   +'</div>'
+   +'<div class="card pad" style="margin-top:10px">'
+     +'<div style="font-size:12.5px;font-weight:700;color:var(--ink3);margin-bottom:9px">관심 부서</div>'
+     +'<div class="depts">'+S.depts.map(d=>'<button class="dchip'+((e.d||[]).includes(d)?" on":"")+'" onclick="togDept(\''+id+'\',this.dataset.d)" data-d="'+esc(d)+'">'+esc(d)+'</button>').join("")
+     +'</div><p class="note" style="margin:9px 0 0">설정에서 부서를 추가·수정할 수 있습니다.</p>'
+   +'</div>'
+   +'<div class="card pad" style="margin-top:10px"><div class="checks">'
+     +(id.startsWith("t_")?CHECKS_T:CHECKS).map(c=>'<button class="ck'+((e.c||{})[c[0]]?" on":"")+'" onclick="togCheck(\''+id+'\',\''+c[0]+'\')">'
+       +'<span class="bx">✓</span>'+c[1]+'</button>').join("")+'</div></div>'
+   +'<div class="card pad" style="margin-top:10px">'
+     +'<div style="font-size:12.5px;font-weight:700;color:var(--ink3);margin-bottom:8px">메모</div>'
+     +'<textarea class="memo" id="memo" placeholder="담당자 이름, 나눈 이야기, 샘플 내용, 후속 조치…">'+esc(e.m||"")+'</textarea>'
+   +'</div>'
+   +'<div class="card pad" style="margin-top:10px">'
+     +'<div style="font-size:12.5px;font-weight:700;color:var(--ink3);margin-bottom:9px">명함 · 자료 사진</div>'
+     +'<div class="photos" id="phs">'+(e.p||[]).map((p,i)=>'<div class="ph" data-i="'+i+'">'
+        +'<img alt="명함"><button class="del" onclick="delPhoto(\''+id+'\','+i+')">✕</button>'
+        +(p.pending?'<span class="up">'+(S.assets?'업로드 대기':'이 기기')+'</span>':(p.err?'<span class="up">용량 초과</span>':''))+'</div>').join("")
+     +(true?'<button class="addph" onclick="shoot(\''+id+'\')">＋<br>촬영 · 추가</button>'
+               :'<div class="addph" style="cursor:default">편집 권한<br>필요</div>')+'</div>'
+     +'<p class="note" style="margin:9px 0 0">촬영 즉시 기기에 저장되고, 네트워크가 되면 자동으로 올라갑니다. 장당 약 150KB로 줄여 저장합니다.</p>'
+   +'</div>'
+
+  ;
+}
+
+/* ============ 뷰: 부스 상세 ============ */
+async function viewBooth(id){
+  const b=await getBooth(id);
+  if(!b){ $("#topbar").innerHTML='<button class="back" onclick="history.back()">‹</button><div class="ttl">부스</div>';
+          $("#view").innerHTML='<div class="empty">부스를 찾지 못했습니다.</div>'; return; }
+  const e=S.mine.b[id]||{};
+  const GB=b.hall?await needGeo(b.hall):null;
+  $("#topbar").innerHTML='<button class="back" onclick="history.back()">‹</button>'
+    +'<div style="flex:1"><div class="ttl">'+esc(b.exh)+'</div><div class="sub">홀 '+esc(b.hall)+' · '+esc(b.stand||"")+'</div></div>'
+    +'<button class="star '+(e.star?"on":"")+'" style="font-size:24px" onclick="togStar(\''+id+'\')">'+(e.star?"★":"☆")+'</button>';
+  const info=[["품목",b.items],["타깃",b.target],["형태",b.format],["용도",b.usage],
+              ["강조점",b.claim],["인사이트",b.insight],["인증",b.cert_ko],
+              ["브랜드",(b.brands||[]).join(", ")],["도시",b.city]]
+    .filter(x=>x[1]&&x[1]!=="미확인"&&String(x[1]).trim())
+    .map(x=>'<div class="kv"><dt>'+x[0]+'</dt><dd>'+esc(x[1])+'</dd></div>').join("");
+  $("#view").innerHTML=
+   '<div class="card bhero"><h1>'+esc(b.exh)+'</h1><div class="loc">'
+    +'<span class="bigst">'+esc(b.stand||"부스 미정")+'</span>'
+    +'<span class="tag">'+esc(b.country)+'</span>'+relTag(b.rel)+fermTag(b)
+    +'<span class="tag">'+esc(b.cat)+'</span>'
+    +(b.biz&&b.biz!=="미확인"?'<span class="tag">'+esc(b.biz)+'</span>':'')
+    +(b.ferm_kind?'<span class="tag ferm">'+esc(b.ferm_kind)+'</span>':'')
+    +(b.iv?'<span class="tag iv">SIAL Innovation</span>':'')
+    +(b.su?'<span class="tag su">SIAL Startup</span>':'')
+    +((b.trails||[]).filter(t=>t!=="SIAL Innovation"&&t!=="SIAL Startups").map(t=>'<span class="tag">'+esc(t)+'</span>').join(''))
+    +'</div></div>'
+
+   +(GB?'<div class="sect">부스 위치 — 홀 '+esc(b.hall)+'</div>'
+      +'<div class="maptoggle" style="margin-top:0"><button class="'+(S.showBoothMap?'on':'')+'" onclick="S.showBoothMap=!S.showBoothMap;render()">'
+        +(S.showBoothMap?'위치 숨기기':'지도에서 위치 보기')+'</button></div>'
+      +(S.showBoothMap?hallMapHTML(b.hall,GB,id,"bm")
+        +'<p class="maphint">초록색이 이 부스입니다 · 두 손가락으로 확대</p>':''):'')
+
+   +'<div class="sect">출품사 정보</div>'
+   +(b.brief?'<div class="card pad"><p class="brief" style="margin:0">'+esc(b.brief)+'</p></div>':'')
+   +(info?'<div class="card pad" style="margin-top:10px"><dl style="margin:0">'+info+'</dl></div>':'')
+   +(b.web?'<a class="btn alt" href="'+esc(b.web)+'" target="_blank" rel="noopener">홈페이지 열기 ↗</a>':'')
+
+   +recordCard(id)
+
+   +'<p class="note" style="margin:14px 2px 0">'+(b.nprod?'공식 등록 제품 '+b.nprod+'건. ':'')
+   +'분류 표시는 우리 8개 분류와의 일치 여부이며, 부스별 개별 검증 결과는 아닙니다.</p>';
+  if(GB&&S.showBoothMap){ bindPan("bm"); requestAnimationFrame(()=>zoomTo("bm")); }
+  bindRecord(id);
+  paintSync();
+}
+function togStar(id){ const e=entry(id); e.star=!e.star; touch(id); render(); }
+function setScore(id,n){ const e=entry(id); e.s=(e.s===n?null:n); if(!e.s)delete e.s; touch(id); render(); }
+function togDept(id,d){ const e=entry(id); e.d=e.d||[];
+  const i=e.d.indexOf(d); if(i<0)e.d.push(d); else e.d.splice(i,1); if(!e.d.length)delete e.d; touch(id); render(); }
+function togCheck(id,k){ const e=entry(id); e.c=e.c||{};
+  if(e.c[k])delete e.c[k]; else e.c[k]=1; if(!Object.keys(e.c).length)delete e.c; touch(id); render(); }
+function shoot(id){ const c=$("#cam"); c.value=""; c.onchange=ev=>{ const f=ev.target.files&&ev.target.files[0]; if(f) addPhoto(id,f); }; c.click(); }
+
+
+
+/* ============ 기록 종류 해석 ============ */
+function talkOf(tid){ const L=(S.talks&&S.talks.list)||[]; return L.find(x=>x.id===tid)||null; }
+function recMeta(id){
+  const e=S.mine.b[id]||{};
+  if(id.startsWith("t_")){ const t=talkOf(id.slice(2));
+    return {kind:"talk", n:(t?t.t:"세션"), s:(t&&t.s?t.s:"세션"), h:"5A",
+            c:(t&&t.d?t.d.slice(5).replace("-","/")+" "+t.w:"SIAL Talks"), r:"", a:"ZZ", o:9997}; }
+  if(id.startsWith("n_")) return {kind:"note", n:e.nm||"(제목 없는 메모)", s:"메모", h:e.hl||"", c:"현장 메모", r:"", a:"ZZ", o:9999};
+  if(id.startsWith("x_")){ const pp=id.split("_");
+    return {kind:"x", n:e.nm||("부스 "+(e.st||pp[2])), s:e.st||pp[2], h:e.hl||pp[1], c:"조사 DB 밖", r:"", a:"ZZ", o:9998}; }
+  const o=S.byId[id]; if(!o) return null;
+  return {kind:"db", n:o.n, s:o.s, h:o.h, c:o.c, r:o.r, iv:o.iv, su:o.su, f:o.f, a:o.a, o:o.o};
+}
+function anyRow(id){
+  const m=recMeta(id); if(!m) return "";
+  if(m.kind==="db") return rowHTML(S.byId[id]);
+  const e=S.mine.b[id]||{};
+  const href= m.kind==="note" ? "go('note','"+id+"')"
+            : m.kind==="talk" ? "go('talk','"+id.slice(2)+"')"
+            : "go('x','"+esc(m.h)+"','"+id.split('_')[2]+"')";
+  return '<button class="row" onclick="'+href+'">'
+    +'<span class="st">'+esc(m.kind==="note"?"메모":m.kind==="talk"?(m.s||"세션"):m.s)+'</span><span class="bd">'
+    +'<span class="nm">'+esc(m.n)+'</span><span class="mt">'
+    +'<span class="tag" style="background:rgba(42,93,159,.14);color:var(--blue)">'+esc(m.c)+'</span>'
+    +(m.h?'<span class="tag">홀 '+esc(m.h)+'</span>':'')
+    +((e.d||[]).length?'<span class="tag">'+esc(e.d.join(" · "))+'</span>':'')
+    +'</span></span><span class="rt">'
+    +(e.star?'<span class="star on">★</span>':'')
+    +(e.s?'<span class="scorepill">'+e.s+'</span>':'')
+    +((e.p||[]).length?'<span class="tag">사진 '+e.p.length+'</span>':'')
+    +'</span></button>';
+}
+/* ============ 뷰: 목록 밖 부스 ============ */
+async function viewX(hl,code){
+  const M=await needExtra(hl); const r=M[code]||null;
+  const id=xkey(hl,code); const e=S.mine.b[id]||{};
+  const GB=await needGeo(hl);
+  const label=(r&&r.l)||code;
+  const nm=(r&&r.n)||(e.nm||"");
+  $("#topbar").innerHTML='<button class="back" onclick="history.back()">‹</button>'
+    +'<div style="flex:1"><div class="ttl">'+esc(nm||("부스 "+label))+'</div>'
+    +'<div class="sub">홀 '+esc(hl)+' · '+esc(label)+' · 조사 DB 밖</div></div>'
+    +'<button class="star '+(e.star?"on":"")+'" style="font-size:24px" onclick="togStar(\''+id+'\')">'+(e.star?"★":"☆")+'</button>';
+  $("#view").innerHTML=
+    '<div class="card bhero"><h1>'+esc(nm||"이름 미확인 부스")+'</h1><div class="loc">'
+     +'<span class="bigst">'+esc(label)+'</span>'
+     +(r&&r.co?'<span class="tag">'+esc(r.co)+'</span>':'')
+     +(r&&r.ba?'<span class="tag">'+esc(r.ba)+'</span>':'')
+     +'<span class="tag" style="background:rgba(42,93,159,.14);color:var(--blue)">조사 DB 밖</span></div>'
+     +(!nm?'<div style="margin-top:12px"><input id="xnm" placeholder="출품사명 직접 입력" value="'+esc(e.nm||"")+'" '
+        +'style="width:100%;padding:11px;border-radius:10px;border:1px solid var(--line);background:var(--bg);font-size:15px"></div>':'')
+     +'</div>'
+    +(GB?'<div class="sect">부스 위치 — 홀 '+esc(hl)+'</div>'
+       +'<div class="maptoggle" style="margin-top:0"><button class="'+(S.showBoothMap?'on':'')+'" onclick="S.showBoothMap=!S.showBoothMap;render()">'
+         +(S.showBoothMap?'위치 숨기기':'지도에서 위치 보기')+'</button></div>'
+       +(S.showBoothMap?hallMapHTML(hl,GB,id,"bm")+'<p class="maphint">초록색이 이 부스입니다</p>':''):'')
+    +((r&&(r.d||(r.br&&r.br.length)))?'<div class="sect">출품사 정보</div>':'')
+    +(r&&r.d?'<div class="card pad"><p class="brief" style="margin:0">'+esc(r.d)+'</p>'
+       +'<p class="note" style="margin:9px 0 0">SIAL 공식 출품사 설명문 원문. 우리 12개 항목 조사는 하지 않은 부스입니다.</p></div>':'')
+    +(r&&r.br&&r.br.length?'<div class="card pad" style="margin-top:10px"><dl style="margin:0">'
+       +'<div class="kv"><dt>브랜드</dt><dd>'+esc(r.br.join(", "))+'</dd></div></dl></div>':'')
+    +(!(r&&r.d)?'<p class="note" style="margin:14px 2px 0">공식 DB에 설명문이 없는 부스입니다. 현장에서 보신 내용을 메모에 남겨 주세요.</p>':'')
+    +recordCard(id);
+  const xn=document.getElementById("xnm");
+  if(xn) xn.oninput=debounce(ev=>{ entry(id).nm=ev.target.value.trim(); entry(id).hl=hl; entry(id).st=label; touch(id); },500);
+  if(S.mine.b[id]){ entry(id).hl=hl; entry(id).st=label; if(nm) entry(id).nm=nm; }
+  bindRecord(id);
+  if(GB&&S.showBoothMap){ bindPan("bm"); requestAnimationFrame(()=>zoomTo("bm")); }
+  restoreFocus(); paintSync();
+}
+function zoomTo(k){
+  const w=document.getElementById(k), pg=document.querySelector('#'+k+'-in polygon.sel');
+  if(!w||!pg) return;
+  PZ[k]={s:1,x:0,y:0}; applyPan(k);
+  const wr=w.getBoundingClientRect(), pr=pg.getBoundingClientRect();
+  if(!wr.width||!pr.width) return;
+  const cx=pr.left+pr.width/2-wr.left, cy=pr.top+pr.height/2-wr.top;
+  const sc=Math.min(7,Math.max(2.2, wr.width/Math.max(pr.width*9,1)));
+  const z=pz(k); z.s=sc; z.x=wr.width/2-cx*sc; z.y=wr.height/2-cy*sc;
+  clampPan(k); applyPan(k);
+}
+
+/* ============ 뷰: 자유 메모 ============ */
+async function viewNote(id){
+  const e=S.mine.b[id]; if(!e){ $("#view").innerHTML='<div class="empty">메모를 찾지 못했습니다.</div>'; return; }
+  await needHalls();
+  $("#topbar").innerHTML='<button class="back" onclick="history.back()">‹</button>'
+    +'<div style="flex:1"><div class="ttl">'+esc(e.nm||"현장 메모")+'</div>'
+    +'<div class="sub">'+(e.hl?'홀 '+esc(e.hl)+' · ':'')+new Date(parseInt(id.slice(2),36)).toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})+'</div></div>'
+    +'<button class="star '+(e.star?"on":"")+'" style="font-size:24px" onclick="togStar(\''+id+'\')">'+(e.star?"★":"☆")+'</button>';
+  const HK=["","1","2","3","4","4A","5A","5B","5C","6","6A","7","8"];
+  $("#view").innerHTML=
+    '<div class="card pad" style="margin-top:14px">'
+     +'<div style="font-size:12.5px;font-weight:700;color:var(--ink3);margin-bottom:8px">제목</div>'
+     +'<input id="ntitle" placeholder="무엇에 대한 메모인가요" value="'+esc(e.nm||"")+'" '
+       +'style="width:100%;padding:11px;border-radius:10px;border:1px solid var(--line);background:var(--bg);font-size:15px">'
+     +'<div style="font-size:12.5px;font-weight:700;color:var(--ink3);margin:13px 0 8px">어디서</div>'
+     +'<select id="nhall" style="width:100%;padding:11px;border-radius:10px;border:1px solid var(--line);background:var(--bg);font-size:15px">'
+     +HK.map(k=>'<option value="'+k+'"'+(e.hl===k?' selected':'')+'>'+(k?'홀 '+k:'장소 미지정')+'</option>').join("")
+     +'</select></div>'
+    +recordCard(id)
+    +'<button class="btn alt" onclick="delNote(\''+id+'\')" style="color:var(--accent)">이 메모 삭제</button>';
+  const t=document.getElementById("ntitle");
+  if(t) t.oninput=debounce(ev=>{ entry(id).nm=ev.target.value; entry(id).note=1; touch(id); },500);
+  const hs=document.getElementById("nhall");
+  if(hs) hs.onchange=ev=>{ entry(id).hl=ev.target.value; entry(id).note=1; touch(id); };
+  bindRecord(id); restoreFocus(); paintSync();
+}
+function newNote(hl){ const id=nkey(); const e=entry(id); e.note=1; e.nm=""; e.hl=hl||""; e.m=""; touch(id); go("note",id); }
+function delNote(id){ askConfirm("이 현장 메모를 삭제할까요?\n되돌릴 수 없습니다.",()=>{
+  delete S.mine.b[id]; lsSave(); saveRemote(); go("mine"); }); }
+
+
+
+/* ============ SIAL Talks ============ */
+async function needTalks(){ if(!S.talks){ try{ S.talks=await loadJSON("talks.json"); }catch(e){ S.talks={list:[],n:0}; } } return S.talks; }
+function todayKey(){ const d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function talkState(t){
+  if(!t.d) return "tba";
+  const now=new Date(), tk=todayKey();
+  if(t.d>tk) return "future"; if(t.d<tk) return "past";
+  const hm=String(now.getHours()).padStart(2,"0")+":"+String(now.getMinutes()).padStart(2,"0");
+  if(hm<t.s) return "soon"; if(hm<=t.e) return "now"; return "past";
+}
+function talkRow(t){
+  const id="t_"+t.id, e=S.mine.b[id]||{}, st=talkState(t);
+  return '<button class="row trow'+(st==="now"?" now":"")+'" onclick="go(\'talk\',\''+t.id+'\')">'
+    +'<span class="st">'+(t.s?esc(t.s):"미정")+'</span><span class="bd">'
+    +'<span class="nm">'+esc(t.t)+'</span><span class="mt">'
+    +(st==="now"?'<span class="tag" style="background:var(--accent);color:#fff">진행 중</span>':'')
+    +(st==="soon"?'<span class="tag" style="background:rgba(27,138,75,.14);color:#1b8a4b">예정</span>':'')
+    +(t.want?'<span class="tag iv">참석 예정</span>':'')
+    +(t.s?'<span class="tag">'+esc(t.s)+'–'+esc(t.e)+'</span>':'<span class="tag">일정 미공개</span>')
+    +'</span></span><span class="rt">'
+    +(e.star?'<span class="star on">★</span>':'')
+    +(e.s?'<span class="scorepill">'+e.s+'</span>':'')
+    +((e.m||"").trim()?'<span class="tag">메모</span>':'')
+    +'</span></button>';
+}
+function talkListHTML(){
+  const L=(S.talks&&S.talks.list)||[]; if(!L.length) return '';
+  const days=[...new Set(L.map(t=>t.d))].sort((x,y)=>(x?x:"9999").localeCompare(y?y:"9999"));
+  const tk=todayKey();
+  if(S.dayOpen===null) S.dayOpen = days.includes(tk)?tk:(days.find(d=>d&&d>=tk)||days.find(d=>d)||days[0]);
+  let out='';
+  for(const d of days){
+    const inDay=L.filter(t=>t.d===d);
+    const lbl=d?(d.slice(5).replace("-","/")+" ("+inDay[0].w+")"):"일정 미공개";
+    const open=(S.dayOpen===d), isToday=(d===tk);
+    const done=inDay.filter(t=>S.mine.b["t_"+t.id]).length;
+    out+='<button class="dayhdr'+(open?" on":"")+'" onclick="S.dayOpen='+(open?'\'\'':'\''+d+'\'')+';render()">'
+      +'<b>'+esc(lbl)+'</b>'+(isToday?'<span class="todaytag">오늘</span>':'')
+      +'<span class="cnt">'+inDay.length+'개'+(done?' · 기록 '+done:'')+'</span>'
+      +'<span class="arr">'+(open?"▾":"▸")+'</span></button>';
+    if(open) out+='<div class="card" style="margin:0 0 10px">'+inDay.map(talkRow).join("")+'</div>';
+  }
+  return out;
+}
+async function viewTalk(tid){
+  await needTalks(); const t=talkOf(tid);
+  if(!t){ $("#view").innerHTML='<div class="empty">세션을 찾지 못했습니다.</div>'; return; }
+  const id="t_"+tid, e=S.mine.b[id]||{}, st=talkState(t);
+  $("#topbar").innerHTML='<button class="back" onclick="history.back()">‹</button>'
+    +'<div style="flex:1"><div class="ttl">SIAL Talks</div>'
+    +'<div class="sub">'+(t.d?esc(t.d.slice(5).replace("-","/")+" ("+t.w+") "+t.s+"–"+t.e):"일정 미공개")+' · '+esc(t.p)+'</div></div>'
+    +'<button class="star '+(e.star?"on":"")+'" style="font-size:24px" onclick="togStar(\''+id+'\')">'+(e.star?"★":"☆")+'</button>';
+  $("#view").innerHTML=
+    '<div class="card bhero"><h1>'+esc(t.t)+'</h1><div class="loc">'
+     +(t.s?'<span class="bigst">'+esc(t.s)+'–'+esc(t.e)+'</span>':'<span class="bigst">일정 미공개</span>')
+     +'<span class="tag">'+esc(t.p)+'</span>'
+     +(t.want?'<span class="tag iv">참석 예정</span>':'')
+     +(st==="now"?'<span class="tag" style="background:var(--accent);color:#fff">진행 중</span>':'')
+     +'</div></div>'
+    +'<div class="sect">세션 내용</div>'
+    +'<div class="card pad"><p class="brief" style="margin:0">'+esc(t.c)+'</p></div>'
+    +recordCard(id)
+    +'<p class="note" style="margin:14px 2px 0">예약 없이 선착순 좌석입니다. 공식 일정은 변경될 수 있습니다.</p>';
+  bindRecord(id); restoreFocus(); paintSync();
+}
+
+/* ============ 뷰: 앱 소개 ============ */
+const INTRO_KEY="sial26.intro.v1";
+function introSeen(){ try{ return localStorage.getItem(INTRO_KEY)==="1"; }catch(e){ return false; } }
+function markIntro(){ try{ localStorage.setItem(INTRO_KEY,"1"); }catch(e){} }
+async function viewIntro(){
+  await needIdx().catch(()=>{});
+  await needTalks();
+  const TL=(S.talks&&S.talks.list)||[], want=TL.filter(t=>t.want).length;
+  const n=S.idx?S.idx.length:2805;
+  const sang=S.idx?S.idx.filter(x=>x.r==="상").length:570;
+  const halls=S.idx?new Set(S.idx.map(x=>x.h).filter(Boolean)).size:12;
+  $("#topbar").innerHTML='<div style="flex:1"></div>';
+  $("#view").innerHTML=
+    '<div class="intro">'
+    +'<img class="ci" src="sempio.png" alt="샘표">'
+    +'<div class="ev">SIAL Paris 2026</div>'
+    +'<div class="dt">2026. 10. 17 (토) — 10. 21 (수)</div>'
+    +'<div class="pl">Paris Nord Villepinte · 홀 '+halls+'개</div>'
+    +'<div class="dd">'+dday()+'</div>'
+    +'<div class="line"></div>'
+    +'<h2>현장 조사 가이드</h2>'
+    +'<p class="lead">사전에 정리한 출품사 '+n.toLocaleString()+'곳을 홀·부스 단위로 찾아보고, '
+    +'현장에서 본 것을 바로 기록하기 위한 앱입니다. 기록은 팀 전원이 실시간으로 공유합니다.</p>'
+    +'<div class="nums">'
+    +'<div><b>'+n.toLocaleString()+'</b><span>조사 출품사</span></div>'
+    +'<div><b>'+sang.toLocaleString()+'</b><span>핵심 분류</span></div>'
+    +'<div><b>'+halls+'</b><span>홀</span></div></div>'
+    +'<div class="how">'
+    +'<div><i>◎</i><b>찾기</b><p>홀 도면에서 부스를 누르거나, 출품사·품목·브랜드로 검색합니다. 조사 DB 밖 부스도 누르면 정보가 뜹니다.</p></div>'
+    +'<div><i>✎</i><b>기록</b><p>관심 정도 1–5, 관심 부서, 방문·시식·샘플·팔로업 체크, 메모와 명함 사진을 남깁니다.</p></div>'
+    +'<div><i>▤</i><b>공유</b><p>팀원 기록이 현황판에 모입니다. 귀국 후 엑셀로 내려받아 그대로 보고서에 씁니다.</p></div>'
+    +'</div>'
+    +'<button class="btn acc" onclick="markIntro();go(\'map\')">시작하기</button>'
+    +'</div>'
+    +'<div class="sect">SIAL Talks — 참석 예정 '+want+'개 / 전체 '+TL.length+'개</div>'
+    +'<p class="note" style="margin:-4px 2px 10px">'+esc((S.talks&&S.talks.place)||"Hall 5A")+'</p>'
+    +talkListHTML();
+  paintSync();
+}
+
+/* ============ 뷰: 내 기록 ============ */
+async function viewMine(){
+  $("#topbar").innerHTML='<div style="flex:1"><div class="ttl">내 기록</div>'
+    +'<div class="sub">'+Object.keys(S.mine.b).length+'곳 기록</div></div><div class="sub" id="syncdot"></div>';
+  await needIdx();
+  const ids=Object.keys(S.mine.b);
+  if(!ids.length){ $("#view").innerHTML='<div class="empty">아직 기록이 없습니다.<br>지도에서 홀을 골라 부스를 눌러 보세요.<br>도면의 회색 부스도 누르면 기록할 수 있습니다.</div>'
+    +'<button class="btn alt" onclick="newNote(\'\')">＋ 현장 메모 추가</button>'; paintSync(); return; }
+  const metas=ids.map(i=>[i,recMeta(i)]).filter(x=>x[1]);
+  metas.sort((A,B)=>{ const a=A[1],b=B[1],ea=S.mine.b[A[0]]||{},eb=S.mine.b[B[0]]||{};
+    return cmpArr([ea.star?0:1,ea.s?-ea.s:1,a.r==="상"?0:a.r==="중"?1:2,a.h||"ZZ",a.a||"ZZ",a.o||9999],
+                  [eb.star?0:1,eb.s?-eb.s:1,b.r==="상"?0:b.r==="중"?1:2,b.h||"ZZ",b.a||"ZZ",b.o||9999]); });
+  const e=id=>S.mine.b[id]||{};
+  const n=k=>ids.filter(i=>k(e(i))).length;
+  const MF={all:x=>true, visit:x=>x.c&&x.c.v, hot:x=>x.s>=4, follow:x=>x.c&&x.c.f,
+            star:x=>x.star, photo:x=>(x.p||[]).length, note:null};
+  const f=S.mineFilt||"all";
+  const rows=metas.map(x=>x[0]).filter(i=>
+    f==="note" ? i.startsWith("n_") : (MF[f]||MF.all)(e(i)));
+  const tile=(k,v,l)=>'<button class="stat tap'+(f===k?" on":"")+'" onclick="S.mineFilt='
+    +(f===k?'\'all\'':'\''+k+'\'')+';render()"><div class="v">'+v+'</div><div class="l">'+l+'</div></button>';
+  $("#view").innerHTML='<div class="stats" style="margin-top:14px">'
+    +tile("all",ids.length,"기록한 부스")
+    +tile("visit",n(MF.visit),"방문 완료")
+    +tile("hot",n(MF.hot),"관심 4점 이상")
+    +tile("follow",n(MF.follow),"팔로업 필요")
+    +'</div>'
+    +'<div class="chips" style="margin-top:10px">'
+    +[["all","전체",ids.length],["star","즐겨찾기",n(MF.star)],["photo","사진 있음",n(MF.photo)],
+      ["note","현장 메모",ids.filter(i=>i.startsWith("n_")).length]]
+      .map(c=>'<button class="chip'+(f===c[0]?" on":"")+'" onclick="S.mineFilt=\''+c[0]+'\';render()">'
+        +c[1]+'<span class="n">'+c[2]+'</span></button>').join("")
+    +'</div>'
+    +'<button class="btn alt" onclick="newNote(\'\')">＋ 현장 메모 추가</button>'
+    +'<div class="sect">'+(f==="all"?"기록":"기록 — "+rows.length+"건")+'</div>'
+    +(rows.length?listWrap(rows.map(anyRow),400)
+      :'<div class="empty">해당하는 기록이 없습니다.<br>위 항목을 다시 눌러 전체로 돌아갑니다.</div>');
+  paintSync();
+}
+
+/* ============ 뷰: 현황판 ============ */
+async function viewBoard(){
+  $("#topbar").innerHTML='<div style="flex:1"><div class="ttl">팀 현황판</div>'
+    +'<div class="sub">전원 기록 합계</div></div><div class="sub" id="syncdot"></div>';
+  $("#view").innerHTML='<div class="empty">불러오는 중…</div>';
+  await needIdx();
+  let docs=[];
+  if(S.db){ try{ const r=await S.db.collection("notes").limit(500).get();
+      docs=((r&&r.docs)||[]).map(d=>({id:d.id,b:((d.exists&&d.data())||{}).b||{}})); }catch(err){ docs=[]; } }
+  const meKey=S.meId||"me";
+  docs=docs.filter(d=>d.id!==meKey).concat([{id:meKey,b:S.mine.b}]);
+  const people=docs.filter(p=>Object.keys(p.b).length);
+  let names={};
+  if(S.user&&S.user.profiles){ try{ names=await S.user.profiles(people.map(p=>p.id)); }catch(e){} }
+  const nameOf=id=>(id===S.meId||id==="me")?"나":((names[id]&&names[id].name)||"팀원");
+
+  const all={}; people.forEach(p=>{ for(const k in p.b){ (all[k]=all[k]||[]).push({who:p.id,e:p.b[k]}); } });
+  const keys=Object.keys(all);
+  const cnt=f=>keys.filter(k=>all[k].some(x=>f(x.e))).length;
+  const deptCnt={}; S.depts.forEach(d=>deptCnt[d]=0);
+  keys.forEach(k=>{ const ds=new Set(); all[k].forEach(x=>(x.e.d||[]).forEach(d=>ds.add(d)));
+    ds.forEach(d=>{ deptCnt[d]=(deptCnt[d]||0)+1; }); });
+  const hallCnt={}; keys.forEach(k=>{ const mm=recMeta(k); const h=(mm&&mm.h)||"?"; hallCnt[h]=(hallCnt[h]||0)+1; });
+  const hot=keys.map(k=>({k,max:Math.max(...all[k].map(x=>x.e.s||0)),
+      who:[...new Set(all[k].filter(x=>(x.e.s||0)>=4).map(x=>nameOf(x.who)))]}))
+    .filter(x=>x.max>=4).sort((a,b)=>b.max-a.max);
+  const nOut=keys.filter(k=>k.startsWith("x_")).length, nNote=keys.filter(k=>k.startsWith("n_")).length;
+
+  $("#view").innerHTML='<div class="stats" style="margin-top:14px">'
+    +'<div class="stat"><div class="v">'+keys.length+'</div><div class="l">팀 전체 기록 부스</div></div>'
+    +'<div class="stat"><div class="v">'+cnt(e=>e.c&&e.c.v)+'</div><div class="l">방문 완료</div></div>'
+    +'<div class="stat"><div class="v">'+cnt(e=>e.c&&e.c.p)+'</div><div class="l">샘플 수령</div></div>'
+    +'<div class="stat"><div class="v">'+cnt(e=>e.c&&e.c.f)+'</div><div class="l">팔로업 필요</div></div>'
+    +'<div class="stat"><div class="v">'+nOut+'</div><div class="l">조사 DB 밖 부스</div></div>'
+    +'<div class="stat"><div class="v">'+nNote+'</div><div class="l">현장 메모</div></div></div>'
+    +'<div class="sect">참여자별</div><div class="card">'
+    +people.sort((a,b)=>Object.keys(b.b).length-Object.keys(a.b).length).map(p=>{
+       const ks=Object.keys(p.b), sc=ks.map(k=>p.b[k].s).filter(Boolean);
+       const av=sc.length?(sc.reduce((a,b)=>a+b,0)/sc.length).toFixed(1):"—";
+       return '<div class="row" style="cursor:default"><span class="bd"><span class="nm">'+esc(nameOf(p.id))+'</span>'
+       +'<span class="mt"><span class="tag">기록 '+ks.length+'</span><span class="tag">평균 관심도 '+av+'</span>'
+       +'<span class="tag">사진 '+ks.reduce((a,k)=>a+((p.b[k].p||[]).length),0)+'</span></span></span></div>';}).join("")
+    +'</div>'
+    +'<div class="sect">부서별 관심 부스</div><div class="card pad">'
+    +S.depts.map(d=>{const c=deptCnt[d]||0,mx=Math.max(1,...Object.values(deptCnt));
+      return '<div style="margin-bottom:11px"><div style="display:flex;justify-content:space-between;font-size:13.5px;font-weight:600">'
+      +'<span>'+esc(d)+'</span><span>'+c+'</span></div><div class="bar"><i style="width:'+(c/mx*100)+'%"></i></div></div>';}).join("")
+    +'</div>'
+    +'<div class="sect">홀별 기록 분포</div><div class="card pad">'
+    +Object.entries(hallCnt).sort((a,b)=>b[1]-a[1]).map(([h,c])=>{const mx=Math.max(...Object.values(hallCnt));
+      return '<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:13.5px;font-weight:600">'
+      +'<span>홀 '+esc(h)+' <span class="sub">/ '+((S.halls&&S.halls[h])?S.halls[h].n:"?")+'곳</span></span><span>'+c+'</span></div>'
+      +'<div class="bar"><i style="width:'+(c/mx*100)+'%;background:'+hcolor(h)+'"></i></div></div>';}).join("")
+    +'</div>'
+    +'<div class="sect">관심 4점 이상 — '+hot.length+'곳</div>'
+    +(hot.length?'<div class="card">'+hot.slice(0,120).map(x=>{const o=recMeta(x.k); if(!o)return"";
+       const href= o.kind==="note"?("go('note','"+x.k+"')") : o.kind==="talk"?("go('talk','"+x.k.slice(2)+"')")
+         : o.kind==="x"?("go('x','"+esc(o.h)+"','"+x.k.split('_')[2]+"')") : ("go('booth','"+x.k+"')");
+       return '<button class="row" onclick="'+href+'"><span class="st">'+esc(o.s||"—")+'</span>'
+       +'<span class="bd"><span class="nm">'+esc(o.n)+'</span><span class="mt"><span class="tag">'+esc(o.c)+'</span>'
+       +'<span class="tag" style="background:rgba(42,93,159,.14);color:var(--blue)">'+esc(x.who.join(", "))+'</span></span></span>'
+       +'<span class="rt"><span class="scorepill">'+x.max+'</span></span></button>';}).join("")+'</div>'
+      :'<div class="empty">아직 4점 이상 기록이 없습니다.</div>')
+    +'<button class="btn alt" onclick="exportCSV()">보고서용 CSV 내려받기</button>'
+    +'<p class="note" style="margin:10px 2px 0">현황판은 팀 전원의 기록을 합산합니다. 기록 수정은 각자 본인 것만 가능합니다.</p>';
+  window.__board={people,all,nameOf};
+  paintSync();
+}
+async function exportCSV(){
+  const {people,all,nameOf}=window.__board||{}; if(!all)return;
+  const rows=[["구분","홀","부스","출품사","분류","관련도","기록자","관심도","관심도설명","부서","방문","시식","샘플","팔로업","메모","사진수","사진 ID"]];
+  Object.keys(all).forEach(k=>{ const o=recMeta(k)||{};
+    const kindKo=o.kind==="note"?"현장 메모":o.kind==="x"?"조사 DB 밖":o.kind==="talk"?"SIAL Talks":"조사 DB";
+    all[k].forEach(x=>{const e=x.e;
+      rows.push([kindKo,o.h||"",o.s||"",o.n||"",o.c||"",o.r||"",nameOf(x.who),e.s||"",e.s?SCORE_LABEL[e.s]:"",
+        (e.d||[]).join(" / "),(e.c&&e.c.v)?"O":"",(e.c&&e.c.t)?"O":"",(e.c&&e.c.p)?"O":"",(e.c&&e.c.f)?"O":"",
+        (e.m||"").replace(/\r?\n/g," "),(e.p||[]).length,
+        (e.p||[]).map(q=>q.id||(q.pending?"(업로드 대기)":"(없음)")).join(" ")]); }); });
+  const csv="﻿"+rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(",")).join("\r\n");
+  const fn="SIAL2026_부스기록_"+new Date().toISOString().slice(0,10)+".csv";
+  if(S.dl){ try{ await S.dl.save({filename:fn,data:csv}); return; }catch(e){} }
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"})); a.download=fn; a.click();
+}
+
+/* ============ 뷰: 설정 ============ */
+async function viewSettings(){
+  $("#topbar").innerHTML='<div style="flex:1"><div class="ttl">설정</div></div><div class="sub" id="syncdot"></div>';
+  const u=S.usage;
+  $("#view").innerHTML='<div class="card pad" style="margin-top:4px;display:flex;align-items:center;gap:10px">'
+   +'<div style="flex:1;min-width:0"><div style="font-weight:700;font-size:14px">'+esc((S.me&&S.me.name)||"")+'</div>'
+   +'<div class="sub" style="font-size:12px">로그인됨</div></div>'
+   +'<button class="chip" onclick="claude.signOut()">로그아웃</button></div>'
+   +'<div class="sect">부서 목록</div>'
+   +'<div class="card pad"><div id="dlist">'+S.depts.map((d,i)=>
+      '<div class="kv"><dd>'+esc(d)+'</dd><dt style="width:auto"><button onclick="rmDept('+i+')" style="color:var(--accent);font-size:12px;font-weight:700">삭제</button></dt></div>').join("")
+   +'</div><div style="display:flex;gap:8px;margin-top:11px">'
+   +'<input id="nd" placeholder="부서명 추가" style="flex:1;padding:11px;border-radius:10px;border:1px solid var(--line);background:var(--bg);font-size:15px">'
+   +'<button class="chip on" style="padding:0 16px" onclick="addDept()">추가</button></div>'
+   +'<p class="note" style="margin:10px 0 0">부서 목록은 팀 전원이 공유합니다. 부스 상세의 관심 부서 항목에 바로 반영됩니다.</p></div>'
+   +'<div class="sect">저장 상태</div><div class="card pad"><dl style="margin:0">'
+   +'<div class="kv"><dt>사용자</dt><dd>'+esc((S.me&&S.me.name)||"확인 안 됨")+'</dd></div>'
+   +'<div class="kv"><dt>편집 권한</dt><dd>'+(S.canWrite===false
+       ?'<b style="color:var(--accent)">없음 — 읽기 전용</b><br><span class="sub">기록이 팀에 공유되지 않습니다. 공유 설정에서 편집 권한을 받아 주세요.</span>'
+       :(S.canWrite===true?'있음 — 기록을 팀에 공유합니다':'확인 중'))+'</dd></div>'
+   +'<div class="kv"><dt>동기화</dt><dd>'+(S.db?(S.dirty?"대기 중 — 네트워크 연결 시 자동 전송":"정상"):"서버 미연결 — 기기에만 저장 중")+'</dd></div>'
+   +'<div class="kv"><dt>사진 저장</dt><dd>'+(S.assets?(u?((u.bytes/1048576).toFixed(1)+"MB / "+(u.maxBytes/1048576).toFixed(0)+"MB · "+u.files+"장"):"확인 중"):"편집 권한이 없어 업로드 불가")+'</dd></div>'
+   +(u?'<div class="kv"><dt></dt><dd><div class="bar"><i style="width:'+Math.min(100,u.bytes/u.maxBytes*100)+'%"></i></div></dd></div>':'')
+   +'<div class="kv"><dt>내 기록</dt><dd>'+Object.keys(S.mine.b).length+'곳 · 사진 '
+   +Object.values(S.mine.b).reduce((a,x)=>a+((x.p||[]).length),0)+'장</dd></div>'
+   +'</dl></div>'
+   +'<div class="sect">데이터</div><div class="card pad">'
+   +'<button class="btn alt" style="margin:0" onclick="refreshData()">출품사 데이터 다시 받기</button>'
+   +'<p class="note" style="margin:10px 0 0">출품사 2,805곳 · 브랜드 1,106개 · 공식 등록 제품 28,283건 기준. '
+   +'앱을 한 번 열어두면 도면과 이미 본 홀은 오프라인에서도 열립니다.</p></div>';
+  const nd=$("#nd"); if(nd) nd.onkeydown=ev=>{ if(ev.key==="Enter") addDept(); };
+  restoreFocus(); paintSync();
+}
+async function saveDepts(){ S.depts=S.depts.filter(Boolean); lsSave();
+  if(S.db){ try{ await S.db.doc("config/depts").set({list:S.depts,u:Date.now()}); }
+            catch(e){ askConfirm("부서 목록 저장에 실패했습니다.\n편집 권한이 필요할 수 있습니다.",()=>{},"확인"); } } render(); }
+function addDept(){ const v=($("#nd").value||"").trim(); if(!v)return;
+  if(S.depts.includes(v)){ $("#nd").value=""; return; } S.depts.push(v); $("#nd").value=""; saveDepts(); }
+function rmDept(i){ askConfirm("'"+S.depts[i]+"' 부서를 목록에서 삭제할까요?\n이미 기록된 태그는 그대로 남습니다.",()=>rmDept2(i)); }
+function rmDept2(i){
+  S.depts.splice(i,1); saveDepts(); }
+async function refreshData(){ const d=await idb();
+  if(d){ try{ const t=d.transaction("kv","readwrite"); t.objectStore("kv").clear(); }catch(e){} }
+  S.idx=null; S.halls=null; S.hall={}; S.byId={}; render(); }
+
+/* ============ 렌더 ============ */
+const TABS=[["intro","홈","⌂"],["map","지도","◎"],["mine","내 기록","✎"],["board","현황판","▤"],["settings","설정","⚙"]];
+function render(){
+  keepFocus();
+  const r=S.route, k=r[0];
+  $("#tabbar").innerHTML=TABS.map(t=>'<button class="tab'+((k===t[0]||(k==="hall"&&t[0]==="map")||(k==="booth"&&t[0]==="map"))?" on":"")
+    +'" onclick="go(\''+t[0]+'\')"><span class="ic">'+t[2]+'</span>'+t[1]+'</button>').join("");
+  const done=()=>{};
+  const fail=e=>{ $("#view").innerHTML='<div class="empty">'+esc(e.message||"오류가 발생했습니다.")
+    +'<br><br>네트워크를 확인한 뒤 다시 시도해 주세요.</div>'; };
+  if(k==="intro") viewIntro().then(done,fail);
+  else if(k==="talk") viewTalk(r[1]).then(done,fail);
+  else if(k==="hall") viewHall(r[1]).then(done,fail);
+  else if(k==="x") viewX(r[1],r[2]).then(done,fail);
+  else if(k==="note") viewNote(r[1]).then(done,fail);
+  else if(k==="booth") viewBooth(r[1]).then(done,fail);
+  else if(k==="mine") viewMine().then(done,fail);
+  else if(k==="board") viewBoard().then(done,fail);
+  else if(k==="settings") viewSettings().then(done,fail);
+  else viewMap().then(done,fail);
+}
+$("#shbg").onclick=closeSheet;
+window.addEventListener("online",()=>{S.online=true;if(S.dirty)saveRemote();flushPhotos();paintSync();});
+window.addEventListener("offline",()=>{S.online=false;paintSync();});
+
+/* ============ 시작 ============ */
+(async function(){
+  const ok = await (window.SIAL_BOOT || Promise.resolve(true));
+  if(!ok) return;
+  lsLoad();
+  S.route=parseHash();
+  if(!introSeen() && location.hash.replace(/^#\/?/,"")==="") S.route=["intro"];
+  render();
+  initCaps().then(()=>{ render(); }).catch(()=>{});
+  needIdx().catch(()=>{});
+})();
+</script>
+</body></html>
