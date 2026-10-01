@@ -15,6 +15,7 @@ function authScreen(msg, mode){
   el.innerHTML =
     '<div class="authbox">'
     + '<img src="sempio.png" alt="샘표" class="authci">'
+    + '<div class="authbrand">SEMPIO</div>'
     + '<h1>SIAL Paris 2026</h1>'
     + '<p class="authsub">부스 노트 · 우리맛연구1팀</p>'
     + (msg ? '<p class="autherr">' + msg + '</p>' : '')
