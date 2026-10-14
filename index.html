@@ -367,9 +367,10 @@ async function kvDel(store,k){ const d=await idb(); if(!d)return;
     t.oncomplete=()=>r();t.onerror=()=>r();}catch(e){r();}}); }
 
 /* ============ 데이터 로딩 (네트워크 → 캐시 폴백) ============ */
+const DV="20261014";                     /* 데이터 파일 버전 — 데이터가 바뀌면 올린다 */
 async function loadJSON(file){
   try{
-    const r=await fetch(file,{cache:"force-cache"});
+    const r=await fetch(file+"?v="+DV,{cache:"force-cache"});
     if(!r.ok) throw 0;
     const j=await r.json();
     kvSet("kv","f:"+file,j);
@@ -910,9 +911,9 @@ function recordCard(id){
      +'<textarea class="memo" id="memo" placeholder="담당자 이름, 나눈 이야기, 샘플 내용, 후속 조치…">'+esc(e.m||"")+'</textarea>'
    +'</div>'
    +'<div class="card pad" style="margin-top:10px">'
-     +'<div style="font-size:12.5px;font-weight:700;color:var(--ink3);margin-bottom:9px">명함 · 자료 사진</div>'
+     +'<div style="font-size:12.5px;font-weight:700;color:var(--ink3);margin-bottom:9px">현장 · 자료 사진</div>'
      +'<div class="photos" id="phs">'+(e.p||[]).map((p,i)=>'<div class="ph" data-i="'+i+'">'
-        +'<img alt="명함"><button class="del" onclick="delPhoto(\''+id+'\','+i+')">✕</button>'
+        +'<img alt="현장 사진"><button class="del" onclick="delPhoto(\''+id+'\','+i+')">✕</button>'
         +(p.pending?'<span class="up">'+(S.assets?'업로드 대기':'이 기기')+'</span>':(p.err?'<span class="up">용량 초과</span>':''))+'</div>').join("")
      +(true?'<button class="addph" onclick="shoot(\''+id+'\')">＋<br>촬영 · 추가</button>'
                :'<div class="addph" style="cursor:default">편집 권한<br>필요</div>')+'</div>'
@@ -993,7 +994,7 @@ function recMeta(id){
   if(id.startsWith("x_")){ const pp=id.split("_");
     return {kind:"x", n:e.nm||("부스 "+(e.st||pp[2])), s:e.st||pp[2], h:e.hl||pp[1], c:"조사 DB 밖", r:"", a:"ZZ", o:9998}; }
   const o=S.byId[id]; if(!o) return null;
-  return {kind:"db", n:o.n, s:o.s, h:o.h, c:o.c, r:o.r, iv:o.iv, su:o.su, f:o.f, a:o.a, o:o.o};
+  return {kind:"db", n:o.n, s:o.s, h:o.h, c:o.c, r:o.r, iv:o.iv, su:o.su, f:o.f, a:o.a, o:o.o, co:o.co, zk:o.zk};
 }
 function anyRow(id){
   const m=recMeta(id); if(!m) return "";
@@ -1277,6 +1278,7 @@ async function viewMine(){
 
 /* ============ 뷰: 현황판 ============ */
 async function viewBoard(){
+  await needHalls().catch(()=>{});
   $("#topbar").innerHTML='<div style="flex:1"><div class="ttl">팀 현황판</div>'
     +'<div class="sub">전원 기록 합계</div></div><div class="sub" id="syncdot"></div>';
   $("#view").innerHTML='<div class="empty">불러오는 중…</div>';
@@ -1347,13 +1349,19 @@ async function viewBoard(){
 }
 async function exportCSV(){
   const {people,all,nameOf}=window.__board||{}; if(!all)return;
-  const rows=[["구분","홀","부스","출품사","분류","관련도","기록자","관심도","관심도설명","부서","방문","시식","샘플","팔로업","메모","사진수","사진 ID"]];
+  const rows=[["구분","홀","부스","구역","출품사","국가","분류","관련도","발효","Innovation","Startup",
+    "기록자","기록 시각","관심도","관심도설명","부서","방문","시식","샘플","팔로업","즐겨찾기",
+    "메모","사진수","사진 파일명","사진 ID"]];
   Object.keys(all).forEach(k=>{ const o=recMeta(k)||{};
     const kindKo=o.kind==="note"?"현장 메모":o.kind==="x"?"조사 DB 밖":o.kind==="talk"?"SIAL Talks":"조사 DB";
-    all[k].forEach(x=>{const e=x.e;
-      rows.push([kindKo,o.h||"",o.s||"",o.n||"",o.c||"",o.r||"",nameOf(x.who),e.s||"",e.s?SCORE_LABEL[e.s]:"",
+    all[k].forEach(x=>{const e=x.e, who=nameOf(x.who);
+      rows.push([kindKo,o.h||"",o.s||"",o.zk||"",o.n||"",o.co||"",o.c||"",o.r||"",o.f||"",
+        o.iv?"O":"",o.su?"O":"",
+        who,stamp(e.u),e.s||"",e.s?SCORE_LABEL[e.s]:"",
         (e.d||[]).join(" / "),(e.c&&e.c.v)?"O":"",(e.c&&e.c.t)?"O":"",(e.c&&e.c.p)?"O":"",(e.c&&e.c.f)?"O":"",
+        e.star?"O":"",
         (e.m||"").replace(/\r?\n/g," "),(e.p||[]).length,
+        (e.p||[]).map((q,i)=>photoName(o,who,i)).join(" "),
         (e.p||[]).map(q=>q.id||(q.pending?"(업로드 대기)":"(없음)")).join(" ")]); }); });
   const csv="﻿"+rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(",")).join("\r\n");
   const fn="SIAL2026_부스기록_"+new Date().toISOString().slice(0,10)+".csv";
@@ -1389,6 +1397,13 @@ function zipBuild(files){                     /* [{name, data:Uint8Array}] — �
   return new Blob([...parts,...cd,end],{type:"application/zip"});
 }
 function safeName(s){ return String(s||"").replace(/[\\/:*?"<>|]/g,"").replace(/\s+/g," ").trim().slice(0,40); }
+function photoName(m,who,i){
+  return [ (m&&m.h?"홀"+m.h:"장소미정"), safeName((m&&m.s)||""), safeName((m&&m.n)||""), safeName(who||"") ]
+    .filter(Boolean).join("_")+"_"+(i+1)+".jpg";
+}
+function stamp(ms){ if(!ms) return "";
+  const d=new Date(ms), z=n=>String(n).padStart(2,"0");
+  return d.getFullYear()+"-"+z(d.getMonth()+1)+"-"+z(d.getDate())+" "+z(d.getHours())+":"+z(d.getMinutes()); }
 async function exportPhotos(){
   const {all,nameOf}=window.__board||{}; if(!all) return;
   const jobs=[];
@@ -1396,23 +1411,26 @@ async function exportPhotos(){
     const m=recMeta(k)||{};
     all[k].forEach(x=>{ (x.e.p||[]).forEach((ph,i)=>{
       if(!ph.id && !ph.k) return;
-      jobs.push({ph,base:[ (m.h?"홀"+m.h:"장소미정"), safeName(m.s||""), safeName(m.n||"") ]
-        .filter(Boolean).join("_")+"_"+(i+1), who:nameOf?nameOf(x.who):"", meta:m, e:x.e});
+      const w=nameOf?nameOf(x.who):"";
+      jobs.push({ph, base:photoName(m,w,i).replace(/\.jpg$/,""), who:w, meta:m, e:x.e});
     }); });
   }
   const btn=document.getElementById("phzip");
   if(!jobs.length){ if(btn) btn.textContent="내려받을 사진이 없습니다"; return; }
-  const files=[]; const idx=[["파일명","구분","홀","부스","출품사","기록자","관심도","메모"]];
+  const files=[]; const seen={};
+  const idx=[["파일명","구분","홀","부스","출품사","국가","기록자","기록 시각","관심도","메모"]];
   for(let n=0;n<jobs.length;n++){
     const j=jobs[n];
     if(btn) btn.textContent="사진 받는 중… "+(n+1)+" / "+jobs.length;
     try{
       const url=await photoURL(j.ph); if(!url) continue;
       const buf=new Uint8Array(await (await fetch(url)).arrayBuffer());
-      const name=j.base+".jpg";
+      let name=j.base+".jpg";
+      if(seen[name]){ seen[name]++; name=j.base+"("+seen[name]+").jpg"; } else seen[name]=1;
       files.push({name,data:buf});
       idx.push([name, j.meta.kind==="note"?"현장 메모":j.meta.kind==="x"?"조사 DB 밖":j.meta.kind==="talk"?"SIAL Talks":"조사 DB",
-        j.meta.h||"", j.meta.s||"", j.meta.n||"", j.who, j.e.s||"", (j.e.m||"").replace(/\r?\n/g," ")]);
+        j.meta.h||"", j.meta.s||"", j.meta.n||"", j.meta.co||"", j.who, stamp(j.e.u), j.e.s||"",
+        (j.e.m||"").replace(/\r?\n/g," ")]);
     }catch(e){}
   }
   if(!files.length){ if(btn) btn.textContent="사진을 받지 못했습니다"; return; }
