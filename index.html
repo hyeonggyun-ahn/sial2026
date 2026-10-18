@@ -634,7 +634,7 @@ async function viewMap(){
 }
 let _foc=null;
 function keepFocus(){ const a=document.activeElement;
-  if(a&&["gq","hq","nd","memo"].includes(a.id)){ let p=null; try{p=a.selectionStart;}catch(e){}
+  if(a&&["gq","hq","nd","memo","ntitle","xnm"].includes(a.id)){ let p=null; try{p=a.selectionStart;}catch(e){}
     _foc={id:a.id,p:p}; } }
 function restoreFocus(){ if(!_foc)return; const f=_foc; _foc=null;
   const el=document.getElementById(f.id); if(!el)return;
@@ -879,7 +879,7 @@ async function viewHall(h){
 /* ============ 기록 카드 (부스 / 목록 밖 부스 / 자유 메모 공용) ============ */
 function bindRecord(id){
   const m=document.getElementById("memo");
-  if(m) m.oninput=debounce(ev=>{ const t=ev.target.value; entry(id).m=t; touch(id); },500);
+  if(m) m.oninput=ev=>{ entry(id).m=ev.target.value; touch(id); };
   const e=S.mine.b[id]||{};
   (e.p||[]).forEach(async(ph,i)=>{ const u=await photoURL(ph);
     const el=document.querySelector('#phs .ph[data-i="'+i+'"] img'); if(el&&u) el.src=u; });
@@ -985,8 +985,19 @@ function shoot(id){ const c=$("#cam"); c.value=""; c.onchange=ev=>{ const f=ev.t
 
 /* ============ 기록 종류 해석 ============ */
 function talkOf(tid){ const L=(S.talks&&S.talks.list)||[]; return L.find(x=>x.id===tid)||null; }
-function recMeta(id){
-  const e=S.mine.b[id]||{};
+/* 팀 전체 기록 중 제목·홀·부스명이 채워진 쪽을 고른다.
+   현장 메모와 조사 DB 밖 부스는 그 정보가 각자의 기록 안에만 있어서,
+   내보내는 사람 본인 것만 보면 남의 메모 제목이 빈칸으로 나간다. */
+function bestEntry(id){
+  const mine=S.mine.b[id];
+  const list=(window.__board&&window.__board.all&&window.__board.all[id])||[];
+  const sc=o=>(((o&&o.nm)||"").trim()?4:0)+(((o&&o.st)||"").trim()?2:0)+(((o&&o.hl)||"").trim()?1:0);
+  let best=mine||null;
+  for(const x of list){ const e=x&&x.e; if(e&&(!best||sc(e)>sc(best))) best=e; }
+  return best||{};
+}
+function recMeta(id,ent){
+  const e=ent||bestEntry(id);
   if(id.startsWith("t_")){ const t=talkOf(id.slice(2));
     return {kind:"talk", n:(t?t.t:"세션"), s:(t&&t.s?t.s:"세션"), h:"5A",
             c:(t&&t.d?t.d.slice(5).replace("-","/")+" "+t.w:"SIAL Talks"), r:"", a:"ZZ", o:9997}; }
@@ -1047,7 +1058,7 @@ async function viewX(hl,code){
     +(!(r&&r.d)?'<p class="note" style="margin:14px 2px 0">공식 DB에 설명문이 없는 부스입니다. 현장에서 보신 내용을 메모에 남겨 주세요.</p>':'')
     +recordCard(id);
   const xn=document.getElementById("xnm");
-  if(xn) xn.oninput=debounce(ev=>{ entry(id).nm=ev.target.value.trim(); entry(id).hl=hl; entry(id).st=label; touch(id); },500);
+  if(xn) xn.oninput=ev=>{ entry(id).nm=ev.target.value.trim(); entry(id).hl=hl; entry(id).st=label; touch(id); };
   if(S.mine.b[id]){ entry(id).hl=hl; entry(id).st=label; if(nm) entry(id).nm=nm; }
   bindRecord(id);
   if(GB&&S.showBoothMap){ bindPan("bm"); requestAnimationFrame(()=>zoomTo("bm")); }
@@ -1086,7 +1097,7 @@ async function viewNote(id){
     +recordCard(id)
     +'<button class="btn alt" onclick="delNote(\''+id+'\')" style="color:var(--accent)">이 메모 삭제</button>';
   const t=document.getElementById("ntitle");
-  if(t) t.oninput=debounce(ev=>{ entry(id).nm=ev.target.value; entry(id).note=1; touch(id); },500);
+  if(t) t.oninput=ev=>{ entry(id).nm=ev.target.value; entry(id).note=1; touch(id); };
   const hs=document.getElementById("nhall");
   if(hs) hs.onchange=ev=>{ entry(id).hl=ev.target.value; entry(id).note=1; touch(id); };
   bindRecord(id); restoreFocus(); paintSync();
@@ -1352,7 +1363,7 @@ async function exportCSV(){
   const rows=[["구분","홀","부스","구역","출품사","국가","분류","관련도","발효","Innovation","Startup",
     "기록자","기록 시각","관심도","관심도설명","부서","방문","시식","샘플","팔로업","즐겨찾기",
     "메모","사진수","사진 파일명","사진 ID"]];
-  Object.keys(all).forEach(k=>{ const o=recMeta(k)||{};
+  Object.keys(all).forEach(k=>{ const o=recMeta(k)||{};   /* bestEntry가 팀 전체를 본다 */
     const kindKo=o.kind==="note"?"현장 메모":o.kind==="x"?"조사 DB 밖":o.kind==="talk"?"SIAL Talks":"조사 DB";
     all[k].forEach(x=>{const e=x.e, who=nameOf(x.who);
       rows.push([kindKo,o.h||"",o.s||"",o.zk||"",o.n||"",o.co||"",o.c||"",o.r||"",o.f||"",
