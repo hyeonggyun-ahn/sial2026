@@ -79,6 +79,10 @@ a{color:var(--blue)}
 
 .row{display:flex;gap:11px;padding:12px 14px;border-bottom:1px solid var(--line2);width:100%;text-align:left;align-items:flex-start}
 .row:last-child{border-bottom:0}
+.row.seen{background:rgba(184,50,44,.07);box-shadow:inset 3px 0 0 var(--accent)}
+.tolist{display:block;width:100%;margin:12px 0 2px;padding:11px 14px;border-radius:11px;
+  background:var(--card);border:1px solid var(--line);color:var(--ink2);
+  font-size:13.5px;font-weight:700;text-align:left}
 .row .st{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;font-weight:700;
   background:var(--chip);color:var(--ink2);padding:3px 6px;border-radius:7px;flex:none;margin-top:1px;white-space:nowrap}
 .row .bd{flex:1;min-width:0}
@@ -325,16 +329,29 @@ const CHECKS=[["v","방문 완료"],["t","시식함"],["p","샘플 수령"],["f"
 const CHECKS_T=[["v","참석함"],["t","자료 받음"],["p","발표자 접촉"],["f","팔로업 필요"]];
 const SCORE_LABEL_T={1:"관심 없음",2:"참고",3:"흥미로움",4:"개발 참고 가치",5:"반드시 후속 검토"};
 const DEFAULT_DEPTS=["우리맛연구실","식품개발연구실","우리발효연구실"];
+const MARTS_V=2;
+const DEFAULT_MARTS=[
+  "E.Leclerc Paris Gaité Montparnasse",   /* Group1 하이퍼마켓 */
+  "MONOPRIX",                             /* Group1 도심 슈퍼마켓 */
+  "Carrefour Market Paris Sèvres",        /* Group2 하이퍼마켓 */
+  "La Grande Épicerie de Paris",          /* Group2 프리미엄식품관 */
+  "So.bio Paris Sèvres",                  /* Group2 유기농 전문 */
+  "Naturalia Bonne Nouvelle",             /* Group3 유기농 전문 */
+  "K-mart Opéra",                         /* Group3 한국계 1순위 */
+  "Ace Mart",                             /* Group3 한국계 2순위 */
+  "Tang Frères (Paris 13e)",              /* 추가 — 파리 최대 아시아 식품점 */
+  "Picard"                                /* 추가 — 냉동 전문 체인 */
+];
 const OPEN=new Date("2026-10-17T00:00:00+02:00");
 const LS="sial26.v1";
 
 /* ============ 상태 ============ */
 const S={
   idx:null, halls:null, hall:{}, byId:{}, geo:{}, extra:{}, zone:{}, showZone:false, talks:null, dayOpen:null,
-  me:null, meId:null, mine:{b:{}}, team:{}, depts:DEFAULT_DEPTS.slice(),
+  me:null, meId:null, mine:{b:{}}, team:{}, depts:DEFAULT_DEPTS.slice(), marts:DEFAULT_MARTS.slice(),
   db:null, user:null, assets:null, dl:null,
   canWrite:true, online:navigator.onLine, dirty:false, usage:null,
-  q:"", hallQ:"", filt:"all", zoneF:null, zoneFH:null, mineFilt:"all", mineEdit:false, sort:"aisle", route:["map"], showMap:true, showBoothMap:true
+  q:"", hallQ:"", filt:"all", zoneF:null, zoneFH:null, lastB:null, mineFilt:"all", mineEdit:false, sort:"aisle", route:["map"], showMap:true, showBoothMap:true
 };
 
 /* ============ 유틸 ============ */
@@ -397,8 +414,9 @@ async function getBooth(id){
 
 /* ============ 로컬 미러 ============ */
 function lsLoad(){ try{const j=JSON.parse(localStorage.getItem(LS)||"null");
-  if(j&&j.b) S.mine=j; if(j&&j.depts) S.depts=j.depts;}catch(e){} }
-function lsSave(){ try{localStorage.setItem(LS,JSON.stringify({b:S.mine.b,depts:S.depts,t:Date.now()}));}catch(e){} }
+  if(j&&j.b) S.mine=j; if(j&&j.depts) S.depts=j.depts;
+  if(j&&j.marts&&j.mv===MARTS_V) S.marts=j.marts;}catch(e){} }
+function lsSave(){ try{localStorage.setItem(LS,JSON.stringify({b:S.mine.b,depts:S.depts,marts:S.marts,mv:MARTS_V,t:Date.now()}));}catch(e){} }
 
 /* ============ 캡슐 초기화 ============ */
 async function initCaps(){
@@ -416,6 +434,8 @@ async function initCaps(){
          saveRemote();        /* 오프라인에서 쌓인 기록을 올린다 */ }catch(e){}
     try{ const s=await db.doc("config/depts").get(); const c=s&&s.exists?s.data():null;
          if(c&&Array.isArray(c.list)&&c.list.length){ S.depts=c.list.slice(); lsSave(); } }catch(e){}
+    try{ const s=await db.doc("config/marts").get(); const c=s&&s.exists?s.data():null;
+         if(c&&Array.isArray(c.list)&&c.list.length){ S.marts=c.list.slice(); lsSave(); } }catch(e){}
     try{ db.doc("config/depts").onSnapshot(s=>{ const c=s&&s.exists?s.data():null;
          if(c&&Array.isArray(c.list)&&c.list.length){ S.depts=c.list.slice(); lsSave();
            if(S.route[0]==="booth"||S.route[0]==="settings") render(); } },()=>{}); }catch(e){}
@@ -532,7 +552,7 @@ function fermTag(b){ const f=b.ferm||b.f;
 function rowHTML(o){
   const id=o.i||o.id, nm=o.n||o.exh, st=o.s||o.stand||"", cat=o.c||o.cat||"";
   const e=S.mine.b[id]||{};
-  return '<button class="row" onclick="go(\'booth\',\''+id+'\')">'
+  return '<button class="row'+(id===S.lastB?" seen":"")+'" onclick="go(\'booth\',\''+id+'\')">'
     +'<span class="st">'+esc(st||"—")+'</span><span class="bd">'
     +'<span class="nm">'+esc(nm)+'</span>'
     +'<span class="mt">'
@@ -552,7 +572,7 @@ function rowHTML(o){
 }
 function xRowHTML(h,o){
   const id=xkey(h,o.c), e=S.mine.b[id]||{}, r=o.r;
-  return '<button class="row" onclick="go(\'x\',\''+h+'\',\''+o.c+'\')">'
+  return '<button class="row'+(id===S.lastB?" seen":"")+'" onclick="go(\'x\',\''+h+'\',\''+o.c+'\')">'
     +'<span class="st">'+esc(o.s||o.c)+'</span><span class="bd">'
     +'<span class="nm">'+esc((r&&r.n)||e.nm||"이름 미확인 부스")+'</span>'
     +'<span class="mt"><span class="tag">조사 DB 밖</span>'
@@ -797,6 +817,7 @@ async function hallSheet(h){
 function closeSheet(){ $("#sheet").classList.remove("on"); $("#shbg").classList.remove("on"); }
 
 /* ============ 뷰: 홀 부스 목록 ============ */
+function toList(h){ S.scrollSeen=1; location.replace("#/hall/"+h); }
 function pickZone(k){ const jump=!!k; S.zoneF=k; render();
   setTimeout(()=>{ const el=document.getElementById("zchips");
     if(el){ const on=el.querySelector(".zchip.on");
@@ -882,6 +903,9 @@ async function viewHall(h){
     +(q?'<div class="sect">조사 DB 밖 '+xr.length+'곳 — 눌러서 바로 기록</div>'
         +listWrap(xr.map(o=>xRowHTML(h,o)),150):'');
   const el=$("#hq"); if(el) el.oninput=debounce(e=>{S.hallQ=e.target.value;render();},200);
+  if(S.scrollSeen){ S.scrollSeen=0;
+    setTimeout(()=>{ const sv=document.querySelector(".row.seen");
+      if(sv) sv.scrollIntoView({block:"center",behavior:"smooth"}); },60); }
   if(G) bindPan("gm");
   restoreFocus(); paintSync();
 }
@@ -945,6 +969,7 @@ async function viewBooth(id){
   if(!b){ $("#topbar").innerHTML='<button class="back" onclick="history.back()">‹</button><div class="ttl">부스</div>';
           $("#view").innerHTML='<div class="empty">부스를 찾지 못했습니다.</div>'; return; }
   const e=S.mine.b[id]||{};
+  S.lastB=id;
   const GB=b.hall?await needGeo(b.hall):null;
   $("#topbar").innerHTML='<button class="back" onclick="history.back()">‹</button>'
     +'<div style="flex:1"><div class="ttl">'+esc(b.exh)+'</div><div class="sub">홀 '+esc(b.hall)+' · '+esc(b.stand||"")+'</div></div>'
@@ -955,7 +980,8 @@ async function viewBooth(id){
     .filter(x=>x[1]&&x[1]!=="미확인"&&String(x[1]).trim())
     .map(x=>'<div class="kv"><dt>'+x[0]+'</dt><dd>'+esc(x[1])+'</dd></div>').join("");
   $("#view").innerHTML=
-   '<div class="card bhero"><h1>'+esc(b.exh)+'</h1><div class="loc">'
+   (b.hall?'<button class="tolist" onclick="toList(\''+esc(b.hall)+'\')">‹ 홀 '+esc(b.hall)+' 목록으로</button>':'')
+   +'<div class="card bhero"><h1>'+esc(b.exh)+'</h1><div class="loc">'
     +'<span class="bigst">'+esc(b.stand||"부스 미정")+'</span>'
     +'<span class="tag">'+esc(b.country)+'</span>'+relTag(b.rel)+fermTag(b)
     +'<span class="tag">'+esc(b.cat)+'</span>'
@@ -1013,8 +1039,10 @@ function recMeta(id,ent){
   if(id.startsWith("t_")){ const t=talkOf(id.slice(2));
     return {kind:"talk", n:(t?t.t:"세션"), s:(t&&t.s?t.s:"세션"), h:"5A",
             c:(t&&t.d?t.d.slice(5).replace("-","/")+" "+t.w:"SIAL Talks"), r:"", a:"ZZ", o:9997}; }
-  if(id.startsWith("s_")) return {kind:"store", n:e.nm||"(이름 없는 기록)", s:"마트", h:"",
-    c:"시장조사", r:"", a:"ZZ", o:9996, mk:e.mk||"", pr:e.pr||"", sz:e.sz||""};
+  if(id.startsWith("s_")){ const it=e.it||[];
+    const title=e.mk||"(매장 미지정)";
+    return {kind:"store", n:title, s:"마트", h:"", c:"시장조사", r:"", a:"ZZ", o:9996,
+            mk:e.mk||"", it:it}; }
   if(id.startsWith("n_")) return {kind:"note", n:e.nm||"(제목 없는 메모)", s:"메모", h:e.hl||"", c:"현장 메모", r:"", a:"ZZ", o:9999};
   if(id.startsWith("x_")){ const pp=id.split("_");
     return {kind:"x", n:e.nm||("부스 "+(e.st||pp[2])), s:e.st||pp[2], h:e.hl||pp[1], c:"조사 DB 밖", r:"", a:"ZZ", o:9998}; }
@@ -1045,6 +1073,7 @@ function anyRow(id){
 async function viewX(hl,code){
   const M=await needExtra(hl); const r=M[code]||null;
   const id=xkey(hl,code); const e=S.mine.b[id]||{};
+  S.lastB=id;
   const GB=await needGeo(hl);
   const label=(r&&r.l)||code;
   const nm=(r&&r.n)||(e.nm||"");
@@ -1053,7 +1082,8 @@ async function viewX(hl,code){
     +'<div class="sub">홀 '+esc(hl)+' · '+esc(label)+' · 조사 DB 밖</div></div>'
     +'<button class="star '+(e.star?"on":"")+'" style="font-size:24px" onclick="togStar(\''+id+'\')">'+(e.star?"★":"☆")+'</button>';
   $("#view").innerHTML=
-    '<div class="card bhero"><h1>'+esc(nm||"이름 미확인 부스")+'</h1><div class="loc">'
+    (hl?'<button class="tolist" onclick="toList(\''+esc(hl)+'\')">‹ 홀 '+esc(hl)+' 목록으로</button>':'')
+    +'<div class="card bhero"><h1>'+esc(nm||"이름 미확인 부스")+'</h1><div class="loc">'
      +'<span class="bigst">'+esc(label)+'</span>'
      +(r&&r.co?'<span class="tag">'+esc(r.co)+'</span>':'')
      +(r&&r.ba?'<span class="tag">'+esc(r.ba)+'</span>':'')
@@ -1119,46 +1149,93 @@ async function viewNote(id){
 }
 async function viewStores(){
   $("#topbar").innerHTML='<button class="back" onclick="history.back()">‹</button>'
-    +'<div style="flex:1"><div class="ttl">시장조사</div><div class="sub">마트 · 매장에서 본 제품</div></div>'
+    +'<div style="flex:1"><div class="ttl">시장조사</div><div class="sub">매장별로 한 건씩 · 제품은 안에서 계속 추가</div></div>'
     +'<div class="sub" id="syncdot"></div>';
   const ids=Object.keys(S.mine.b).filter(k=>k.startsWith("s_"))
     .sort((a,b)=>(S.mine.b[b].u||0)-(S.mine.b[a].u||0));
+  const nItem=ids.reduce((a,k)=>a+((S.mine.b[k].it||[]).length),0);
   $("#view").innerHTML=
-    '<button class="btn acc" onclick="newStore()">＋ 마트에서 본 제품 기록</button>'
-    +'<p class="note" style="margin:10px 2px 14px">제품명 · 마트 · 가격 · 용량을 남기면 귀국 후 바로 가격 비교표가 됩니다.</p>'
-    +(ids.length?'<div class="sect">내 기록 '+ids.length+'건</div>'+listWrap(ids.map(anyRow),300)
+    '<button class="btn acc" onclick="newStore()">＋ 매장 방문 기록 추가</button>'
+    +'<p class="note" style="margin:10px 2px 14px">매장 하나에 기록 하나입니다. 그 안에서 제품·가격·용량을 계속 더하세요.</p>'
+    +(ids.length?'<div class="sect">내 기록 — 매장 '+ids.length+'곳 · 제품 '+nItem+'건</div>'
+        +listWrap(ids.map(storeRow),300)
       :'<div class="empty">아직 기록이 없습니다.</div>');
   paintSync();
 }
-function newStore(){ const id=skey(); const e=entry(id); e.store=1; e.nm=""; e.mk=""; e.pr=""; e.sz=""; e.m="";
+function storeRow(id){
+  const e=S.mine.b[id]||{}, it=e.it||[];
+  const names=it.map(x=>x.n).filter(Boolean).slice(0,3).join(" · ");
+  return '<button class="row'+(id===S.lastB?" seen":"")+'" onclick="go(\'store\',\''+id+'\')">'
+    +'<span class="st">마트</span><span class="bd">'
+    +'<span class="nm">'+esc(e.mk||"(매장 미지정)")+'</span><span class="mt">'
+    +'<span class="tag" style="background:rgba(58,154,158,.16);color:#2b7a7d">제품 '+it.length+'건</span>'
+    +(names?'<span class="tag">'+esc(names)+(it.length>3?' 외':'')+'</span>':'')
+    +((e.d||[]).length?'<span class="tag">'+esc(e.d.join(" · "))+'</span>':'')
+    +'</span></span><span class="rt">'
+    +(e.star?'<span class="star on">★</span>':'')
+    +(e.s?'<span class="scorepill">'+e.s+'</span>':'')
+    +((e.p||[]).length?'<span class="tag">사진 '+e.p.length+'</span>':'')
+    +'</span></button>';
+}
+function newStore(){ const id=skey(); const e=entry(id); e.store=1; e.mk=""; e.it=[]; e.m="";
   touch(id); go("store",id); }
+function addItem(id){ const e=entry(id); e.it=e.it||[]; e.it.push({n:"",p:"",z:""}); touch(id); render();
+  setTimeout(()=>{ const el=document.getElementById("it_n_"+(e.it.length-1)); if(el) el.focus(); },60); }
+function rmItem(id,i){ const e=entry(id); if(!e.it) return; e.it.splice(i,1); touch(id); render(); }
 async function viewStore(id){
   const e=S.mine.b[id]; if(!e){ $("#view").innerHTML='<div class="empty">기록을 찾지 못했습니다.</div>'; return; }
+  S.lastB=id;
+  const it=e.it||[];
   $("#topbar").innerHTML='<button class="back" onclick="history.back()">‹</button>'
-    +'<div style="flex:1"><div class="ttl">'+esc(e.nm||"마트 기록")+'</div>'
-    +'<div class="sub">시장조사'+(e.mk?' · '+esc(e.mk):'')+'</div></div>'
+    +'<div style="flex:1"><div class="ttl">'+esc(e.mk||"매장 미지정")+'</div>'
+    +'<div class="sub">시장조사 · 제품 '+it.length+'건</div></div>'
     +'<button class="star '+(e.star?"on":"")+'" style="font-size:24px" onclick="togStar(\''+id+'\')">'+(e.star?"★":"☆")+'</button>';
-  const fld=(lbl,fid,val,ph,extra)=>
-    '<div style="font-size:12.5px;font-weight:700;color:var(--ink3);margin:13px 0 8px">'+lbl+'</div>'
-    +'<input id="'+fid+'" '+(extra||'')+' placeholder="'+ph+'" value="'+esc(val||"")+'" '
-    +'style="width:100%;padding:11px;border-radius:10px;border:1px solid var(--line);background:var(--bg);font-size:15px">';
+  const custom = e.mk && S.marts.indexOf(e.mk)<0;
+  const INP='style="width:100%;padding:10px;border-radius:9px;border:1px solid var(--line);background:var(--bg);font-size:15px"';
   $("#view").innerHTML=
-    '<div class="card pad" style="margin-top:14px">'
-     +fld("제품 · 브랜드","snm",e.nm,"무엇을 보셨나요").replace('margin:13px 0 8px','margin-bottom:8px')
-     +fld("마트 · 지점","smk",e.mk,"예: Carrefour La Défense")
-     +'<div style="display:flex;gap:10px">'
-       +'<div style="flex:1">'+fld("가격","spr",e.pr,"예: 3.49€")+'</div>'
-       +'<div style="flex:1">'+fld("용량 · 규격","ssz",e.sz,"예: 250ml")+'</div>'
-     +'</div></div>'
+    '<button class="tolist" onclick="toStores()">‹ 시장조사 목록으로</button>'
+    +'<div class="card pad" style="margin-top:10px">'
+     +'<div style="font-size:12.5px;font-weight:700;color:var(--ink3);margin-bottom:8px">매장</div>'
+     +'<select id="smk" '+INP+'>'
+       +'<option value=""'+(e.mk?'':' selected')+'>— 매장을 고르세요 —</option>'
+       +S.marts.map(m=>'<option value="'+esc(m)+'"'+(e.mk===m?' selected':'')+'>'+esc(m)+'</option>').join("")
+       +'<option value="__etc"'+(custom?' selected':'')+'>목록에 없는 매장 (직접 입력)</option>'
+     +'</select>'
+     +'<input id="smk2" placeholder="매장 이름을 적어 주세요" value="'+esc(custom?e.mk:"")+'"'
+       +' style="width:100%;padding:10px;border-radius:9px;border:1px solid var(--line);background:var(--bg);'
+       +'font-size:15px;margin-top:8px'+(custom?'':';display:none')+'">'
+     +'<p class="note" style="margin:9px 0 0">매장 목록은 설정에서 팀이 함께 관리합니다.</p>'
+    +'</div>'
+    +'<div class="sect">제품 '+it.length+'건</div>'
+    +(it.length?it.map((x,i)=>
+       '<div class="card pad" style="margin-bottom:9px">'
+        +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
+          +'<span style="font-size:12.5px;font-weight:700;color:var(--ink3)">'+(i+1)+'번</span>'
+          +'<button class="delx" onclick="rmItem(\''+id+'\','+i+')">삭제</button></div>'
+        +'<input id="it_n_'+i+'" '+INP+' placeholder="제품 · 브랜드" value="'+esc(x.n||"")+'">'
+        +'<div style="display:flex;gap:8px;margin-top:8px">'
+          +'<input id="it_p_'+i+'" '+INP+' placeholder="가격 (예: 3.49€)" value="'+esc(x.p||"")+'">'
+          +'<input id="it_z_'+i+'" '+INP+' placeholder="용량 (예: 250ml)" value="'+esc(x.z||"")+'">'
+        +'</div></div>').join("")
+      :'<p class="note" style="margin:2px 2px 10px">아직 제품이 없습니다. 아래 버튼으로 추가하세요.</p>')
+    +'<button class="btn alt" onclick="addItem(\''+id+'\')">＋ 제품 추가</button>'
     +recordCard(id)
-    +'<button class="btn alt" onclick="delStore(\''+id+'\')" style="color:var(--accent)">이 기록 삭제</button>';
-  [["snm","nm"],["smk","mk"],["spr","pr"],["ssz","sz"]].forEach(([fid,key])=>{
-    const el=document.getElementById(fid);
-    if(el) el.oninput=ev=>{ entry(id)[key]=ev.target.value; entry(id).store=1; touch(id); };
-  });
+    +'<button class="btn alt" onclick="delStore(\''+id+'\')" style="color:var(--accent)">이 매장 기록 삭제</button>';
+  const sel=document.getElementById("smk"), oth=document.getElementById("smk2");
+  if(sel) sel.onchange=ev=>{ const v=ev.target.value;
+    if(v==="__etc"){ oth.style.display=""; oth.focus(); entry(id).mk=oth.value.trim(); }
+    else { oth.style.display="none"; entry(id).mk=v; }
+    entry(id).store=1; touch(id); paintSync(); };
+  if(oth) oth.oninput=ev=>{ entry(id).mk=ev.target.value.trim(); entry(id).store=1; touch(id); };
+  it.forEach((x,i)=>{ [["n","it_n_"],["p","it_p_"],["z","it_z_"]].forEach(([key,pre])=>{
+    const el=document.getElementById(pre+i);
+    if(el) el.oninput=ev=>{ const ee=entry(id); ee.it=ee.it||[];
+      if(ee.it[i]) { ee.it[i][key]=ev.target.value; ee.store=1; touch(id); } };
+  }); });
   bindRecord(id); restoreFocus(); paintSync();
 }
-function delStore(id){ askConfirm("이 시장조사 기록을 삭제할까요?\n되돌릴 수 없습니다.",()=>{
+function toStores(){ location.replace("#/stores"); }
+function delStore(id){ askConfirm("이 매장 기록을 삭제할까요?\n제품 "+((S.mine.b[id]||{}).it||[]).length+"건과 메모·사진이 모두 지워집니다.",()=>{
   delete S.mine.b[id]; lsSave(); saveRemote(); go("stores"); }); }
 function newNote(hl){ const id=nkey(); const e=entry(id); e.note=1; e.nm=""; e.hl=hl||""; e.m=""; touch(id); go("note",id); }
 function delNote(id){ askConfirm("이 현장 메모를 삭제할까요?\n되돌릴 수 없습니다.",()=>{
@@ -1435,6 +1512,18 @@ async function exportCSV(){
   Object.keys(all).forEach(k=>{ const o=recMeta(k)||{};   /* bestEntry가 팀 전체를 본다 */
     const kk=kindKo(o.kind);
     all[k].forEach(x=>{const e=x.e, who=nameOf(x.who);
+      if(o.kind==="store"){                       /* 매장 한 곳의 제품들을 한 줄씩 펼친다 */
+        const its=(e.it&&e.it.length)?e.it:[{n:"",p:"",z:""}];
+        its.forEach((p,pi)=>{
+          rows.push([kk,"","","",p.n||"","","시장조사","","","","",
+            who,stamp(e.u),e.s||"",e.s?SCORE_LABEL[e.s]:"",
+            (e.d||[]).join(" / "),(e.c&&e.c.v)?"O":"",(e.c&&e.c.t)?"O":"",(e.c&&e.c.p)?"O":"",(e.c&&e.c.f)?"O":"",
+            e.star?"O":"",(e.m||"").replace(/\r?\n/g," "),
+            pi===0?(e.p||[]).length:"",
+            pi===0?(e.p||[]).map((q,i)=>photoName(o,who,i)).join(" "):"",
+            pi===0?(e.p||[]).map(q=>q.id||(q.pending?"(업로드 대기)":"(없음)")).join(" "):"",
+            e.mk||"", p.p||"", p.z||""]); });
+        return; }
       rows.push([kk,o.h||"",o.s||"",o.zk||"",o.n||"",o.co||"",o.c||"",o.r||"",o.f||"",
         o.iv?"O":"",o.su?"O":"",
         who,stamp(e.u),e.s||"",e.s?SCORE_LABEL[e.s]:"",
@@ -1551,6 +1640,13 @@ async function viewSettings(){
    +'<input id="nd" placeholder="부서명 추가" style="flex:1;padding:11px;border-radius:10px;border:1px solid var(--line);background:var(--bg);font-size:15px">'
    +'<button class="chip on" style="padding:0 16px" onclick="addDept()">추가</button></div>'
    +'<p class="note" style="margin:10px 0 0">부서 목록은 팀 전원이 공유합니다. 부스 상세의 관심 부서 항목에 바로 반영됩니다.</p></div>'
+   +'<div class="sect">시장조사 매장 목록</div>'
+   +'<div class="card pad"><div id="mlist">'+S.marts.map((d,i)=>
+      '<div class="kv"><dd>'+esc(d)+'</dd><dt style="width:auto"><button onclick="rmMart('+i+')" style="color:var(--accent);font-size:12px;font-weight:700">삭제</button></dt></div>').join("")
+   +'</div><div style="display:flex;gap:8px;margin-top:11px">'
+   +'<input id="nm2" placeholder="매장명 추가 (예: Carrefour La Défense)" style="flex:1;padding:11px;border-radius:10px;border:1px solid var(--line);background:var(--bg);font-size:15px">'
+   +'<button class="chip on" style="padding:0 16px" onclick="addMart()">추가</button></div>'
+   +'<p class="note" style="margin:10px 0 0">팀 전원이 공유합니다. 시장조사 기록의 매장 선택 목록에 바로 반영됩니다.</p></div>'
    +'<div class="sect">저장 상태</div><div class="card pad"><dl style="margin:0">'
    +'<div class="kv"><dt>사용자</dt><dd>'+esc((S.me&&S.me.name)||"확인 안 됨")+'</dd></div>'
    +'<div class="kv"><dt>편집 권한</dt><dd>'+(S.canWrite===false
@@ -1572,6 +1668,12 @@ async function viewSettings(){
 async function saveDepts(){ S.depts=S.depts.filter(Boolean); lsSave();
   if(S.db){ try{ await S.db.doc("config/depts").set({list:S.depts,u:Date.now()}); }
             catch(e){ askConfirm("부서 목록 저장에 실패했습니다.\n편집 권한이 필요할 수 있습니다.",()=>{},"확인"); } } render(); }
+function addMart(){ const el=document.getElementById("nm2"); const v=(el&&el.value||"").trim();
+  if(!v) return; if(S.marts.indexOf(v)<0) S.marts.push(v); el.value=""; saveMarts(); }
+function rmMart(i){ S.marts.splice(i,1); saveMarts(); }
+async function saveMarts(){ lsSave();
+  if(S.db){ try{ await S.db.doc("config/marts").set({list:S.marts,u:Date.now()}); }
+            catch(e){ askConfirm("매장 목록 저장에 실패했습니다.\n편집 권한이 필요할 수 있습니다.",()=>{},"확인"); } } render(); }
 function addDept(){ const v=($("#nd").value||"").trim(); if(!v)return;
   if(S.depts.includes(v)){ $("#nd").value=""; return; } S.depts.push(v); $("#nd").value=""; saveDepts(); }
 function rmDept(i){ askConfirm("'"+S.depts[i]+"' 부서를 목록에서 삭제할까요?\n이미 기록된 태그는 그대로 남습니다.",()=>rmDept2(i)); }
