@@ -412,7 +412,8 @@ async function initCaps(){
             paintSync(); }
   if(db&&S.meId){
     try{ const s=await db.doc("notes/"+S.meId).get(); const d=s&&s.exists?s.data():null;
-         if(d&&d.b){ S.mine=mergeMine(S.mine,d); lsSave(); } }catch(e){}
+         if(d&&d.b){ S.mine=mergeMine(S.mine,d); lsSave(); }
+         saveRemote();        /* 오프라인에서 쌓인 기록을 올린다 */ }catch(e){}
     try{ const s=await db.doc("config/depts").get(); const c=s&&s.exists?s.data():null;
          if(c&&Array.isArray(c.list)&&c.list.length){ S.depts=c.list.slice(); lsSave(); } }catch(e){}
     try{ db.doc("config/depts").onSnapshot(s=>{ const c=s&&s.exists?s.data():null;
@@ -440,7 +441,7 @@ const saveRemote=debounce(async()=>{
 },700);
 function entry(id){ if(!S.mine.b[id]) S.mine.b[id]={}; return S.mine.b[id]; }
 function touch(id){ const e=entry(id); e.u=Date.now();
-  const empty=!e.note&&!e.star&&!e.s&&!(e.d||[]).length&&!Object.keys(e.c||{}).length
+  const empty=!e.note&&!e.store&&!(e.nm||"").trim()&&!(e.mk||"").trim()&&!e.star&&!e.s&&!(e.d||[]).length&&!Object.keys(e.c||{}).length
     &&!(e.m||"").trim()&&!(e.p||[]).length&&!(e.nm||"").trim();
   if(empty) delete S.mine.b[id];
   lsSave(); saveRemote(); paintSync(); }
@@ -624,6 +625,16 @@ async function viewMap(){
       +'<button onclick="mreset(\'mw\')" style="font-size:12px">⤢</button></div></div>'
       +'<p class="maphint">홀을 눌러 부스 목록으로 · 두 손가락으로 확대</p>'
       +'<div class="sect">홀 목록 — DB 등재 출품사 수</div><div class="card">'+cards+'</div>'
+      +'<div class="sect">전시장 밖</div><div class="card">'
+      +'<button class="hallcard" onclick="go(\'stores\')">'
+      +'<span class="hbadge" style="background:#3a9a9e">마트</span>'
+      +'<span class="hmain"><span class="nm">시장조사</span>'
+      +'<span class="ds">마트·매장에서 본 제품 · 가격 · 용량</span></span>'
+      +'<span class="rt" style="display:flex;flex:none;flex-direction:column;align-items:flex-end;gap:3px">'
+      +'<span style="font-size:15px;font-weight:800;letter-spacing:-.02em">'
+      +Object.keys(S.mine.b).filter(k=>k.startsWith("s_")).length
+      +'<span class="sub" style="font-weight:600">건</span></span></span>'
+      +'<span class="chev">›</span></button></div>'
       +'<p class="note" style="margin:14px 2px 0">DB 등재 출품사 '+(S.idx?S.idx.length:2805)+'곳. '
       +'분류 표시는 우리 8개 분류와의 일치 여부이며 부스별 개별 검증 결과는 아닙니다. '
       +'홀 7은 핵심 분류는 적지만 치즈·유제품 발효 제조사가 147곳으로 가장 많습니다.</p>');
@@ -634,7 +645,7 @@ async function viewMap(){
 }
 let _foc=null;
 function keepFocus(){ const a=document.activeElement;
-  if(a&&["gq","hq","nd","memo","ntitle","xnm"].includes(a.id)){ let p=null; try{p=a.selectionStart;}catch(e){}
+  if(a&&["gq","hq","nd","memo","ntitle","xnm","snm","smk","spr","ssz"].includes(a.id)){ let p=null; try{p=a.selectionStart;}catch(e){}
     _foc={id:a.id,p:p}; } }
 function restoreFocus(){ if(!_foc)return; const f=_foc; _foc=null;
   const el=document.getElementById(f.id); if(!el)return;
@@ -889,6 +900,7 @@ async function needExtra(hl){ if(!S.extra[hl]){ let d=[];
     const m={}; d.forEach(r=>{ m[r.c]=r; }); S.extra[hl]=m; } return S.extra[hl]; }
 function xkey(hl,code){ return "x_"+hl+"_"+code; }
 function nkey(){ return "n_"+Date.now().toString(36); }
+function skey(){ return "s_"+Date.now().toString(36); }
 function recordCard(id){
   const e=S.mine.b[id]||{};
   return '<div class="sect">내 기록</div>'
@@ -1001,6 +1013,8 @@ function recMeta(id,ent){
   if(id.startsWith("t_")){ const t=talkOf(id.slice(2));
     return {kind:"talk", n:(t?t.t:"세션"), s:(t&&t.s?t.s:"세션"), h:"5A",
             c:(t&&t.d?t.d.slice(5).replace("-","/")+" "+t.w:"SIAL Talks"), r:"", a:"ZZ", o:9997}; }
+  if(id.startsWith("s_")) return {kind:"store", n:e.nm||"(이름 없는 기록)", s:"마트", h:"",
+    c:"시장조사", r:"", a:"ZZ", o:9996, mk:e.mk||"", pr:e.pr||"", sz:e.sz||""};
   if(id.startsWith("n_")) return {kind:"note", n:e.nm||"(제목 없는 메모)", s:"메모", h:e.hl||"", c:"현장 메모", r:"", a:"ZZ", o:9999};
   if(id.startsWith("x_")){ const pp=id.split("_");
     return {kind:"x", n:e.nm||("부스 "+(e.st||pp[2])), s:e.st||pp[2], h:e.hl||pp[1], c:"조사 DB 밖", r:"", a:"ZZ", o:9998}; }
@@ -1012,10 +1026,11 @@ function anyRow(id){
   if(m.kind==="db") return rowHTML(S.byId[id]);
   const e=S.mine.b[id]||{};
   const href= m.kind==="note" ? "go('note','"+id+"')"
+            : m.kind==="store" ? "go('store','"+id+"')"
             : m.kind==="talk" ? "go('talk','"+id.slice(2)+"')"
             : "go('x','"+esc(m.h)+"','"+id.split('_')[2]+"')";
   return '<button class="row" onclick="'+href+'">'
-    +'<span class="st">'+esc(m.kind==="note"?"메모":m.kind==="talk"?(m.s||"세션"):m.s)+'</span><span class="bd">'
+    +'<span class="st">'+esc(m.kind==="note"?"메모":m.kind==="store"?"마트":m.kind==="talk"?(m.s||"세션"):m.s)+'</span><span class="bd">'
     +'<span class="nm">'+esc(m.n)+'</span><span class="mt">'
     +'<span class="tag" style="background:rgba(42,93,159,.14);color:var(--blue)">'+esc(m.c)+'</span>'
     +(m.h?'<span class="tag">홀 '+esc(m.h)+'</span>':'')
@@ -1102,6 +1117,49 @@ async function viewNote(id){
   if(hs) hs.onchange=ev=>{ entry(id).hl=ev.target.value; entry(id).note=1; touch(id); };
   bindRecord(id); restoreFocus(); paintSync();
 }
+async function viewStores(){
+  $("#topbar").innerHTML='<button class="back" onclick="history.back()">‹</button>'
+    +'<div style="flex:1"><div class="ttl">시장조사</div><div class="sub">마트 · 매장에서 본 제품</div></div>'
+    +'<div class="sub" id="syncdot"></div>';
+  const ids=Object.keys(S.mine.b).filter(k=>k.startsWith("s_"))
+    .sort((a,b)=>(S.mine.b[b].u||0)-(S.mine.b[a].u||0));
+  $("#view").innerHTML=
+    '<button class="btn acc" onclick="newStore()">＋ 마트에서 본 제품 기록</button>'
+    +'<p class="note" style="margin:10px 2px 14px">제품명 · 마트 · 가격 · 용량을 남기면 귀국 후 바로 가격 비교표가 됩니다.</p>'
+    +(ids.length?'<div class="sect">내 기록 '+ids.length+'건</div>'+listWrap(ids.map(anyRow),300)
+      :'<div class="empty">아직 기록이 없습니다.</div>');
+  paintSync();
+}
+function newStore(){ const id=skey(); const e=entry(id); e.store=1; e.nm=""; e.mk=""; e.pr=""; e.sz=""; e.m="";
+  touch(id); go("store",id); }
+async function viewStore(id){
+  const e=S.mine.b[id]; if(!e){ $("#view").innerHTML='<div class="empty">기록을 찾지 못했습니다.</div>'; return; }
+  $("#topbar").innerHTML='<button class="back" onclick="history.back()">‹</button>'
+    +'<div style="flex:1"><div class="ttl">'+esc(e.nm||"마트 기록")+'</div>'
+    +'<div class="sub">시장조사'+(e.mk?' · '+esc(e.mk):'')+'</div></div>'
+    +'<button class="star '+(e.star?"on":"")+'" style="font-size:24px" onclick="togStar(\''+id+'\')">'+(e.star?"★":"☆")+'</button>';
+  const fld=(lbl,fid,val,ph,extra)=>
+    '<div style="font-size:12.5px;font-weight:700;color:var(--ink3);margin:13px 0 8px">'+lbl+'</div>'
+    +'<input id="'+fid+'" '+(extra||'')+' placeholder="'+ph+'" value="'+esc(val||"")+'" '
+    +'style="width:100%;padding:11px;border-radius:10px;border:1px solid var(--line);background:var(--bg);font-size:15px">';
+  $("#view").innerHTML=
+    '<div class="card pad" style="margin-top:14px">'
+     +fld("제품 · 브랜드","snm",e.nm,"무엇을 보셨나요").replace('margin:13px 0 8px','margin-bottom:8px')
+     +fld("마트 · 지점","smk",e.mk,"예: Carrefour La Défense")
+     +'<div style="display:flex;gap:10px">'
+       +'<div style="flex:1">'+fld("가격","spr",e.pr,"예: 3.49€")+'</div>'
+       +'<div style="flex:1">'+fld("용량 · 규격","ssz",e.sz,"예: 250ml")+'</div>'
+     +'</div></div>'
+    +recordCard(id)
+    +'<button class="btn alt" onclick="delStore(\''+id+'\')" style="color:var(--accent)">이 기록 삭제</button>';
+  [["snm","nm"],["smk","mk"],["spr","pr"],["ssz","sz"]].forEach(([fid,key])=>{
+    const el=document.getElementById(fid);
+    if(el) el.oninput=ev=>{ entry(id)[key]=ev.target.value; entry(id).store=1; touch(id); };
+  });
+  bindRecord(id); restoreFocus(); paintSync();
+}
+function delStore(id){ askConfirm("이 시장조사 기록을 삭제할까요?\n되돌릴 수 없습니다.",()=>{
+  delete S.mine.b[id]; lsSave(); saveRemote(); go("stores"); }); }
 function newNote(hl){ const id=nkey(); const e=entry(id); e.note=1; e.nm=""; e.hl=hl||""; e.m=""; touch(id); go("note",id); }
 function delNote(id){ askConfirm("이 현장 메모를 삭제할까요?\n되돌릴 수 없습니다.",()=>{
   delete S.mine.b[id]; lsSave(); saveRemote(); go("mine"); }); }
@@ -1311,6 +1369,12 @@ async function viewBoard(){
   keys.forEach(k=>{ const ds=new Set(); all[k].forEach(x=>(x.e.d||[]).forEach(d=>ds.add(d)));
     ds.forEach(d=>{ deptCnt[d]=(deptCnt[d]||0)+1; }); });
   const hallCnt={}; keys.forEach(k=>{ const mm=recMeta(k); const h=(mm&&mm.h)||"?"; hallCnt[h]=(hallCnt[h]||0)+1; });
+  /* 사진을 올라간 날짜별로 센다 */
+  const dayCnt={}; let phTotal=0;
+  keys.forEach(k=>{ all[k].forEach(x=>{ (x.e.p||[]).forEach(ph=>{
+    if(!ph.id && !ph.k) return; phTotal++;
+    const d=photoDay(ph,x.e); if(d) dayCnt[d]=(dayCnt[d]||0)+1; }); }); });
+  const dayList=Object.keys(dayCnt).sort().map(d=>({k:d,n:dayCnt[d]}));
   const hot=keys.map(k=>({k,max:Math.max(...all[k].map(x=>x.e.s||0)),
       who:[...new Set(all[k].filter(x=>(x.e.s||0)>=4).map(x=>nameOf(x.who)))]}))
     .filter(x=>x.max>=4).sort((a,b)=>b.max-a.max);
@@ -1352,8 +1416,13 @@ async function viewBoard(){
        +'<span class="rt"><span class="scorepill">'+x.max+'</span></span></button>';}).join("")+'</div>'
       :'<div class="empty">아직 4점 이상 기록이 없습니다.</div>')
     +'<button class="btn alt" onclick="exportCSV()">보고서용 CSV 내려받기</button>'
-    +'<button class="btn alt" id="phzip" onclick="exportPhotos()">사진 전체 내려받기 (ZIP)</button>'
-    +'<p class="note" style="margin:10px 2px 0">사진은 용량이 커서 <b>PC 브라우저</b>에서 받으시길 권합니다. 부스명으로 파일명이 붙고 목록.csv가 같이 들어갑니다.</p>'
+    +'<div class="sect">사진 내려받기</div>'
+    +'<div class="chips">'
+      +dayList.map(d=>'<button class="chip" id="phzip_'+d.k+'" onclick="exportPhotos(\''+d.k+'\')">'
+        +d.k.slice(5).replace("-","/")+'<span class="n">'+d.n+'</span></button>').join("")
+      +'<button class="chip" id="phzip" onclick="exportPhotos()">전체<span class="n">'+phTotal+'</span></button>'
+    +'</div>'
+    +'<p class="note" style="margin:10px 2px 0">날짜는 사진이 서버에 올라간 날 기준입니다. 용량이 커서 <b>PC 브라우저</b>에서 받으시길 권합니다. 부스명으로 파일명이 붙고 목록.csv가 같이 들어갑니다.</p>'
     +'<p class="note" style="margin:10px 2px 0">현황판은 팀 전원의 기록을 합산합니다. 기록 수정은 각자 본인 것만 가능합니다.</p>';
   window.__board={people,all,nameOf};
   paintSync();
@@ -1362,18 +1431,19 @@ async function exportCSV(){
   const {people,all,nameOf}=window.__board||{}; if(!all)return;
   const rows=[["구분","홀","부스","구역","출품사","국가","분류","관련도","발효","Innovation","Startup",
     "기록자","기록 시각","관심도","관심도설명","부서","방문","시식","샘플","팔로업","즐겨찾기",
-    "메모","사진수","사진 파일명","사진 ID"]];
+    "메모","사진수","사진 파일명","사진 ID","마트","가격","용량"]];
   Object.keys(all).forEach(k=>{ const o=recMeta(k)||{};   /* bestEntry가 팀 전체를 본다 */
-    const kindKo=o.kind==="note"?"현장 메모":o.kind==="x"?"조사 DB 밖":o.kind==="talk"?"SIAL Talks":"조사 DB";
+    const kk=kindKo(o.kind);
     all[k].forEach(x=>{const e=x.e, who=nameOf(x.who);
-      rows.push([kindKo,o.h||"",o.s||"",o.zk||"",o.n||"",o.co||"",o.c||"",o.r||"",o.f||"",
+      rows.push([kk,o.h||"",o.s||"",o.zk||"",o.n||"",o.co||"",o.c||"",o.r||"",o.f||"",
         o.iv?"O":"",o.su?"O":"",
         who,stamp(e.u),e.s||"",e.s?SCORE_LABEL[e.s]:"",
         (e.d||[]).join(" / "),(e.c&&e.c.v)?"O":"",(e.c&&e.c.t)?"O":"",(e.c&&e.c.p)?"O":"",(e.c&&e.c.f)?"O":"",
         e.star?"O":"",
         (e.m||"").replace(/\r?\n/g," "),(e.p||[]).length,
         (e.p||[]).map((q,i)=>photoName(o,who,i)).join(" "),
-        (e.p||[]).map(q=>q.id||(q.pending?"(업로드 대기)":"(없음)")).join(" ")]); }); });
+        (e.p||[]).map(q=>q.id||(q.pending?"(업로드 대기)":"(없음)")).join(" "),
+        o.mk||"",o.pr||"",o.sz||""]); }); });
   const csv="﻿"+rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(",")).join("\r\n");
   const fn="SIAL2026_부스기록_"+new Date().toISOString().slice(0,10)+".csv";
   if(S.dl){ try{ await S.dl.save({filename:fn,data:csv}); return; }catch(e){} }
@@ -1408,25 +1478,37 @@ function zipBuild(files){                     /* [{name, data:Uint8Array}] — �
   return new Blob([...parts,...cd,end],{type:"application/zip"});
 }
 function safeName(s){ return String(s||"").replace(/[\\/:*?"<>|]/g,"").replace(/\s+/g," ").trim().slice(0,40); }
+function kindKo(k){ return k==="note"?"현장 메모":k==="x"?"조사 DB 밖":k==="talk"?"SIAL Talks":k==="store"?"시장조사":"조사 DB"; }
+function photoDay(ph,e){
+  const k=String((ph&&(ph.id||ph.k))||"");
+  const m=k.match(/(\d{13})/);                       /* 보관함 키에 업로드 시각이 들어 있다 */
+  const ms=m?parseInt(m[1],10):((e&&e.u)||0);
+  if(!ms) return "";
+  const d=new Date(ms), z=n=>String(n).padStart(2,"0");
+  return d.getFullYear()+"-"+z(d.getMonth()+1)+"-"+z(d.getDate());
+}
 function photoName(m,who,i){
-  return [ (m&&m.h?"홀"+m.h:"장소미정"), safeName((m&&m.s)||""), safeName((m&&m.n)||""), safeName(who||"") ]
+  const head=(m&&m.kind==="store") ? "마트" : (m&&m.h?"홀"+m.h:"장소미정");
+  const mid =(m&&m.kind==="store") ? safeName(m.mk||"") : safeName((m&&m.s)||"");
+  return [ head, mid, safeName((m&&m.n)||""), safeName(who||"") ]
     .filter(Boolean).join("_")+"_"+(i+1)+".jpg";
 }
 function stamp(ms){ if(!ms) return "";
   const d=new Date(ms), z=n=>String(n).padStart(2,"0");
   return d.getFullYear()+"-"+z(d.getMonth()+1)+"-"+z(d.getDate())+" "+z(d.getHours())+":"+z(d.getMinutes()); }
-async function exportPhotos(){
+async function exportPhotos(day){
   const {all,nameOf}=window.__board||{}; if(!all) return;
   const jobs=[];
   for(const k in all){
     const m=recMeta(k)||{};
     all[k].forEach(x=>{ (x.e.p||[]).forEach((ph,i)=>{
       if(!ph.id && !ph.k) return;
+      if(day && photoDay(ph,x.e)!==day) return;
       const w=nameOf?nameOf(x.who):"";
       jobs.push({ph, base:photoName(m,w,i).replace(/\.jpg$/,""), who:w, meta:m, e:x.e});
     }); });
   }
-  const btn=document.getElementById("phzip");
+  const btn=document.getElementById(day?("phzip_"+day):"phzip");
   if(!jobs.length){ if(btn) btn.textContent="내려받을 사진이 없습니다"; return; }
   const files=[]; const seen={};
   const idx=[["파일명","구분","홀","부스","출품사","국가","기록자","기록 시각","관심도","메모"]];
@@ -1439,8 +1521,9 @@ async function exportPhotos(){
       let name=j.base+".jpg";
       if(seen[name]){ seen[name]++; name=j.base+"("+seen[name]+").jpg"; } else seen[name]=1;
       files.push({name,data:buf});
-      idx.push([name, j.meta.kind==="note"?"현장 메모":j.meta.kind==="x"?"조사 DB 밖":j.meta.kind==="talk"?"SIAL Talks":"조사 DB",
-        j.meta.h||"", j.meta.s||"", j.meta.n||"", j.meta.co||"", j.who, stamp(j.e.u), j.e.s||"",
+      idx.push([name, kindKo(j.meta.kind),
+        (j.meta.kind==="store"?(j.meta.mk||""):(j.meta.h||"")), j.meta.s||"", j.meta.n||"", j.meta.co||"",
+        j.who, stamp(j.e.u), j.e.s||"",
         (j.e.m||"").replace(/\r?\n/g," ")]);
     }catch(e){}
   }
@@ -1448,7 +1531,7 @@ async function exportPhotos(){
   const csv="﻿"+idx.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(",")).join("\r\n");
   files.push({name:"목록.csv",data:new TextEncoder().encode(csv)});
   const blob=zipBuild(files);
-  const fn="SIAL2026_현장사진_"+new Date().toISOString().slice(0,10)+".zip";
+  const fn="SIAL2026_현장사진_"+(day||new Date().toISOString().slice(0,10))+".zip";
   const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=fn; a.click();
   if(btn) btn.textContent="사진 "+(files.length-1)+"장 내려받기 완료";
 }
@@ -1513,6 +1596,8 @@ function render(){
   else if(k==="hall") viewHall(r[1]).then(done,fail);
   else if(k==="x") viewX(r[1],r[2]).then(done,fail);
   else if(k==="note") viewNote(r[1]).then(done,fail);
+  else if(k==="stores") viewStores().then(done,fail);
+  else if(k==="store") viewStore(r[1]).then(done,fail);
   else if(k==="booth") viewBooth(r[1]).then(done,fail);
   else if(k==="mine") viewMine().then(done,fail);
   else if(k==="board") viewBoard().then(done,fail);
@@ -1525,7 +1610,8 @@ window.addEventListener("offline",()=>{S.online=false;paintSync();});
 
 /* ============ 시작 ============ */
 (async function(){
-  const ok = await (window.SIAL_BOOT || Promise.resolve(true));
+  let ok=true;
+  try{ ok = await (window.SIAL_BOOT || Promise.resolve(true)); }catch(e){ ok=true; }
   if(!ok) return;
   lsLoad();
   S.route=parseHash();
