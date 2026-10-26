@@ -5,7 +5,7 @@
   --line:#e4e0d8; --line2:#efece6;
   --accent:#b8322c; --accent2:#e07b1a; --ok:#2f7d4f; --blue:#2a5d9f;
   --chip:#f0ede7; --sh:0 1px 2px rgba(0,0,0,.05),0 4px 14px rgba(0,0,0,.05);
-  --r:14px; --safe:env(safe-area-inset-bottom,0px);
+  --r:14px; --safe:env(safe-area-inset-bottom,0px); --safetop:env(safe-area-inset-top,0px);
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#141312; --card:#1e1c1a; --ink:#f0ece5; --ink2:#a9a196; --ink3:#7d766c;
@@ -152,9 +152,26 @@ textarea.memo:focus{border-color:var(--accent)}
 .ph .del{position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;
   background:rgba(0,0,0,.62);color:#fff;font-size:11px;display:grid;place-items:center}
 .ph .up{position:absolute;inset:0;background:rgba(0,0,0,.45);color:#fff;font-size:10px;
-  display:grid;place-items:center;font-weight:700}
+  display:grid;place-items:center;font-weight:700;pointer-events:none}
 .addph{width:96px;height:66px;border-radius:10px;border:1.5px dashed var(--line);display:grid;place-items:center;
   color:var(--ink3);font-size:11.5px;font-weight:600;text-align:center;line-height:1.3;background:var(--card)}
+.ph img{cursor:zoom-in}
+
+/* 사진 크게 보기 */
+.lbox{position:fixed;inset:0;z-index:80;background:#000;display:none;touch-action:none}
+.lbox.on{display:block}
+.lbox img{position:absolute;inset:0;margin:auto;max-width:100%;max-height:100%;
+  width:auto;height:auto;object-fit:contain;display:block}
+.lbox .lx{position:absolute;top:calc(10px + var(--safetop));right:12px;width:40px;height:40px;border-radius:50%;
+  background:rgba(255,255,255,.16);color:#fff;font-size:17px;display:grid;place-items:center;z-index:2}
+.lbox .ln{position:absolute;top:50%;transform:translateY(-50%);width:44px;height:64px;
+  background:rgba(255,255,255,.12);color:#fff;font-size:20px;display:grid;place-items:center;z-index:2;border-radius:10px}
+.lbox .ln.prev{left:8px} .lbox .ln.next{right:8px}
+.lbox .lc{position:absolute;left:0;right:0;bottom:calc(14px + var(--safe));text-align:center;color:#fff;
+  font-size:13px;font-weight:600;text-shadow:0 1px 3px rgba(0,0,0,.8);z-index:2}
+.lbox .lt{position:absolute;left:0;right:0;top:calc(14px + var(--safetop));padding:0 60px;text-align:center;
+  color:#fff;font-size:13px;font-weight:700;text-shadow:0 1px 3px rgba(0,0,0,.8);z-index:2;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
 /* board */
 .stats{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
@@ -319,6 +336,14 @@ polygon.xn{fill:#6f9fd8;fill-opacity:.55;stroke:#2a5d9f}
 <nav class="tabs"><div class="in" id="tabbar"></div></nav>
 <div class="sheetbg" id="shbg"></div>
 <div class="sheet" id="sheet"><div class="grab"></div><div class="inner" id="shin"></div></div>
+<div class="lbox" id="lbox">
+  <div class="lt" id="lbt"></div>
+  <img id="lbimg" alt="사진 크게 보기">
+  <button class="lx" onclick="closePhoto()">✕</button>
+  <button class="ln prev" onclick="stepPhoto(-1)">‹</button>
+  <button class="ln next" onclick="stepPhoto(1)">›</button>
+  <div class="lc" id="lbc"></div>
+</div>
 <input type="file" id="cam" accept="image/*" capture="environment" class="hide">
 <script>
 "use strict";
@@ -528,6 +553,57 @@ async function photoURL(p){
   if(p.id && window.claude && claude.blobURL){ const u=await claude.blobURL(p.id); if(u) return u; }
   return null;
 }
+/* ============ 사진 크게 보기 ============ */
+/* 썸네일이 96x66으로 작아 현장에서 라벨이 안 읽힌다. 탭하면 전체 화면으로 띄운다. */
+let _lb={id:null,i:0};
+async function openPhoto(id,i){
+  const ps=((S.mine.b[id]||{}).p)||[]; if(!ps.length) return;
+  _lb={id:id,i:i};
+  document.getElementById("lbox").classList.add("on");
+  document.body.style.overflow="hidden";
+  await paintPhoto();
+}
+async function paintPhoto(){
+  const ps=((S.mine.b[_lb.id]||{}).p)||[];
+  if(!ps.length){ closePhoto(); return; }
+  if(_lb.i<0) _lb.i=ps.length-1;
+  if(_lb.i>=ps.length) _lb.i=0;
+  const m=recMeta(_lb.id)||{};
+  document.getElementById("lbt").textContent=
+    [m.kind==="store"?(m.mk||"매장"):(m.h?"홀 "+m.h:""), m.s||"", m.n||""].filter(Boolean).join(" · ");
+  document.getElementById("lbc").textContent=(_lb.i+1)+" / "+ps.length;
+  const nav=ps.length>1?"grid":"none";
+  document.querySelector("#lbox .prev").style.display=nav;
+  document.querySelector("#lbox .next").style.display=nav;
+  const img=document.getElementById("lbimg");
+  img.removeAttribute("src");
+  const u=await photoURL(ps[_lb.i]);
+  if(u && document.getElementById("lbox").classList.contains("on")) img.src=u;
+}
+function stepPhoto(d){ _lb.i+=d; paintPhoto(); }
+function closePhoto(){
+  document.getElementById("lbox").classList.remove("on");
+  document.getElementById("lbimg").removeAttribute("src");
+  document.body.style.overflow="";
+}
+(function bindLightbox(){
+  const bx=document.getElementById("lbox"); if(!bx) return;
+  let x0=null,y0=null;
+  bx.addEventListener("touchstart",ev=>{ const t=ev.touches[0]; x0=t.clientX; y0=t.clientY; },{passive:true});
+  bx.addEventListener("touchend",ev=>{
+    if(x0===null) return;
+    const t=ev.changedTouches[0], dx=t.clientX-x0, dy=t.clientY-y0; x0=null;
+    if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)) stepPhoto(dx<0?1:-1);      /* 좌우로 넘기기 */
+    else if(dy>90&&Math.abs(dy)>Math.abs(dx)) closePhoto();                   /* 아래로 쓸어 닫기 */
+  },{passive:true});
+  bx.addEventListener("click",ev=>{ if(ev.target===bx) closePhoto(); });       /* 여백 탭 */
+  document.addEventListener("keydown",ev=>{
+    if(!bx.classList.contains("on")) return;
+    if(ev.key==="Escape") closePhoto();
+    else if(ev.key==="ArrowRight") stepPhoto(1);
+    else if(ev.key==="ArrowLeft") stepPhoto(-1);
+  });
+})();
 async function delPhoto(boothId,i){
   const e=entry(boothId), p=(e.p||[])[i]; if(!p)return;
   askConfirm("이 사진을 삭제할까요?",()=>delPhoto2(boothId,i)); }
@@ -949,7 +1025,8 @@ function recordCard(id){
    +'<div class="card pad" style="margin-top:10px">'
      +'<div style="font-size:12.5px;font-weight:700;color:var(--ink3);margin-bottom:9px">현장 · 자료 사진</div>'
      +'<div class="photos" id="phs">'+(e.p||[]).map((p,i)=>'<div class="ph" data-i="'+i+'">'
-        +'<img alt="현장 사진"><button class="del" onclick="delPhoto(\''+id+'\','+i+')">✕</button>'
+        +'<img alt="현장 사진" onclick="openPhoto(\''+id+'\','+i+')">'
+        +'<button class="del" onclick="delPhoto(\''+id+'\','+i+')">✕</button>'
         +(p.pending?'<span class="up">'+(S.assets?'업로드 대기':'이 기기')+'</span>':(p.err?'<span class="up">용량 초과</span>':''))+'</div>').join("")
      +(true?'<button class="addph" onclick="shoot(\''+id+'\')">＋<br>촬영 · 추가</button>'
                :'<div class="addph" style="cursor:default">편집 권한<br>필요</div>')+'</div>'
@@ -1185,6 +1262,8 @@ function rmItem(id,i){ const e=entry(id); if(!e.it) return; e.it.splice(i,1); to
 async function viewStore(id){
   const e=S.mine.b[id]; if(!e){ $("#view").innerHTML='<div class="empty">기록을 찾지 못했습니다.</div>'; return; }
   S.lastB=id;
+  if(!e.it && ((e.nm||"").trim()||(e.pr||"").trim()||(e.sz||"").trim())){   /* 옛 단일 입력 → 제품 1건으로 */
+    e.it=[{n:e.nm||"",p:e.pr||"",z:e.sz||""}]; delete e.nm; delete e.pr; delete e.sz; touch(id); }
   const it=e.it||[];
   $("#topbar").innerHTML='<button class="back" onclick="history.back()">‹</button>'
     +'<div style="flex:1"><div class="ttl">'+esc(e.mk||"매장 미지정")+'</div>'
@@ -1513,7 +1592,7 @@ async function exportCSV(){
     const kk=kindKo(o.kind);
     all[k].forEach(x=>{const e=x.e, who=nameOf(x.who);
       if(o.kind==="store"){                       /* 매장 한 곳의 제품들을 한 줄씩 펼친다 */
-        const its=(e.it&&e.it.length)?e.it:[{n:"",p:"",z:""}];
+        const its=(e.it&&e.it.length)?e.it:[{n:e.nm||"",p:e.pr||"",z:e.sz||""}];
         its.forEach((p,pi)=>{
           rows.push([kk,"","","",p.n||"","","시장조사","","","","",
             who,stamp(e.u),e.s||"",e.s?SCORE_LABEL[e.s]:"",
